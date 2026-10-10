@@ -57,9 +57,9 @@ export default function StockChart({ symbol }: { symbol: string }) {
     });
 
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#059669",
-      topColor: "rgba(5, 150, 105, 0.18)",
-      bottomColor: "rgba(5, 150, 105, 0.01)",
+      lineColor: "#4f46e5",
+      topColor: "rgba(79, 70, 229, 0.18)",
+      bottomColor: "rgba(79, 70, 229, 0.01)",
       lineWidth: 2,
     });
 
@@ -182,8 +182,8 @@ export default function StockChart({ symbol }: { symbol: string }) {
               onClick={() => setRange(item.value)}
               className={`rounded-md px-3 py-2 text-xs font-semibold ${
                 range === item.value
-                  ? "bg-emerald-600 text-white"
-                  : "text-slate-600 hover:text-emerald-800"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-600 hover:text-indigo-800"
               }`}
             >
               {item.label}

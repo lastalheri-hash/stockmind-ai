@@ -1,5 +1,8 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import { useCallback, useEffect, useState } from "react";
 import StockChart from "@/components/StockChart";
 
@@ -473,7 +476,7 @@ export default function Home() {
   const signal = analysis?.signal;
   const signalClass =
     signal === "BUY"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "border-indigo-200 bg-emerald-50 text-indigo-700"
       : signal === "SELL"
         ? "border-rose-400/30 bg-rose-400/10 text-rose-700"
         : "border-amber-400/30 bg-amber-400/10 text-amber-800";
@@ -481,39 +484,39 @@ export default function Home() {
   const indicators = analysis?.indicators;
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-3 py-3 text-slate-100 sm:px-5 md:px-7">
-      <header className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+    <main className="min-h-screen bg-slate-50 px-3 py-3 text-slate-900 sm:px-5 md:px-7">
+      <header className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">
-            StockMind <span className="text-emerald-400">AI</span>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            StockMind <span className="text-indigo-600">AI</span>
           </h1>
-          <p className="mt-1 text-[10px] tracking-[0.18em] text-slate-400">
+          <p className="mt-1 text-[10px] tracking-[0.18em] text-slate-500">
             EQUITY INTELLIGENCE  /  MARKET RESEARCH
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-300">
+        <div className="flex items-center gap-3 text-xs text-slate-700">
 
           <button
             onClick={() => void loadStocks()}
             disabled={loading}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 hover:border-emerald-400 disabled:opacity-50"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 hover:border-indigo-400 disabled:opacity-50"
           >
             Refresh
           </button>
         </div>
       </header>
 
-      <nav aria-label="Main navigation" className="mx-auto mt-3 flex max-w-[1600px] flex-wrap gap-1 rounded-xl border border-slate-800 bg-[#101827] p-1">
-      <button onClick={() => setActivePage("overview")} className={activePage === "overview" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Overview</button>
-      <button onClick={() => setActivePage("ai")} className={activePage === "ai" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>STC-AI</button>
-      <button onClick={() => setActivePage("news")} className={activePage === "news" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Market News</button>
+      <nav aria-label="Main navigation" className="mx-auto mt-3 flex max-w-[1600px] flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
+      <button onClick={() => setActivePage("overview")} className={activePage === "overview" ? "rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Overview</button>
+      <button onClick={() => setActivePage("ai")} className={activePage === "ai" ? "rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>STC-AI</button>
+      <button onClick={() => setActivePage("news")} className={activePage === "news" ? "rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Market News</button>
     </nav>
 
     <section className="mx-auto mt-3 max-w-[1600px]">
       {activePage === "overview" && (
       <>
-        <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
+        <p className="text-xs font-semibold tracking-[0.2em] text-indigo-700">
           STOCKMIND WORKSPACE
         </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
@@ -554,12 +557,12 @@ export default function Home() {
               onChange={(event) => setSearchSymbol(event.target.value.toUpperCase())}
               placeholder="Enter ticker, e.g. TSLA, META, AMD"
               maxLength={20}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
           <button
             type="submit"
-            className="self-end rounded-xl bg-emerald-700 px-6 py-3 font-semibold text-white hover:bg-emerald-800"
+            className="self-end rounded-xl bg-indigo-700 px-6 py-3 font-semibold text-white hover:bg-indigo-800"
           >
             Analyze Stock
           </button>
@@ -581,10 +584,10 @@ export default function Home() {
               {(marketData?.indices ?? []).map((item) => {
                 const positive = (item.changePercent ?? 0) >= 0;
                 return (
-                  <button key={item.symbol} onClick={() => setSelected(item.symbol)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-emerald-300">
+                  <button key={item.symbol} onClick={() => setSelected(item.symbol)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-indigo-300">
                     <p className="text-sm font-semibold">{item.name}</p>
                     <p className="mt-3 text-xl font-bold">{money(item.price)}</p>
-                    <p className={`mt-1 text-sm ${positive ? "text-emerald-700" : "text-rose-700"}`}>
+                    <p className={`mt-1 text-sm ${positive ? "text-indigo-700" : "text-rose-700"}`}>
                       {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
                     </p>
                   </button>
@@ -605,7 +608,7 @@ export default function Home() {
                   role="tab"
                   aria-selected={marketTab === tab.id}
                   onClick={() => setMarketTab(tab.id as "gainers" | "losers" | "active")}
-                  className={marketTab === tab.id ? "border-b-2 border-emerald-700 px-4 py-3 text-sm font-bold text-emerald-800" : "border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 hover:text-slate-900"}
+                  className={marketTab === tab.id ? "border-b-2 border-emerald-700 px-4 py-3 text-sm font-bold text-indigo-800" : "border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 hover:text-slate-900"}
                 >
                   {tab.label}
                 </button>
@@ -631,7 +634,7 @@ export default function Home() {
                         </span>
                         <span className="shrink-0 text-right">
                           <span className="block text-sm font-semibold">{money(item.price)}</span>
-                          <span className={"text-xs " + (positive ? "text-emerald-700" : "text-rose-700")}>
+                          <span className={"text-xs " + (positive ? "text-indigo-700" : "text-rose-700")}>
                             {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
                           </span>
                         </span>
@@ -664,7 +667,7 @@ export default function Home() {
                 <p
                   className={`mt-2 text-sm ${
                     (current?.change ?? 0) >= 0
-                      ? "text-emerald-700"
+                      ? "text-indigo-700"
                       : "text-rose-700"
                   }`}
                 >
@@ -678,7 +681,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-3">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <StockChart symbol={selected} />
             </div>
 
@@ -699,14 +702,14 @@ export default function Home() {
               <button
                 onClick={() => void loadAnalysis(selected)}
                 disabled={analysisLoading}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-xs hover:bg-emerald-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs hover:bg-indigo-50 disabled:opacity-50"
               >
                 Re-analyse
               </button>
             </div>
 
             {analysisLoading ? (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-6 text-sm text-slate-600">
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
                 Analysing technical indicators and risk conditions…
               </div>
             ) : analysisError ? (
@@ -833,7 +836,7 @@ export default function Home() {
                           href={article.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block py-3 first:pt-0 hover:text-emerald-800"
+                          className="block py-3 first:pt-0 hover:text-indigo-800"
                         >
                           <span className="text-sm font-semibold leading-5">{article.title}</span>
                           <span className="mt-1 block text-xs text-slate-500">
@@ -874,14 +877,14 @@ export default function Home() {
           <div className="mb-6">
   
           {/* STOCKMIND_FIRST_SCREEN_TERMINAL */}
-          <section className="mb-5 overflow-hidden rounded-2xl border border-slate-800 bg-[#101827] shadow-2xl shadow-black/20">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+          <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-2xl shadow-black/20">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div>
-                <p className="text-[10px] font-bold tracking-[0.22em] text-emerald-400">STOCKMIND TERMINAL</p>
+                <p className="text-[10px] font-bold tracking-[0.22em] text-indigo-600">STOCKMIND TERMINAL</p>
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                  <h2 className="text-xl font-black text-white">{selected}</h2>
-                  <span className="text-xs text-slate-400">{current?.name || "Loading company…"}</span>
-                  <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">{current?.marketState || "Market status unavailable"}</span>
+                  <h2 className="text-xl font-black text-slate-900">{selected}</h2>
+                  <span className="text-xs text-slate-500">{current?.name || "Loading company…"}</span>
+                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] text-slate-700">{current?.marketState || "Market status unavailable"}</span>
                 </div>
               </div>
               <form onSubmit={(event) => {
@@ -894,50 +897,50 @@ export default function Home() {
                 setError("");
                 setSelected(ticker);
               }} className="flex min-w-0 gap-2">
-                <input aria-label="Stock ticker" value={searchSymbol} onChange={(event) => setSearchSymbol(event.target.value.toUpperCase())} placeholder="Ticker e.g. TSLA" maxLength={20} className="w-32 rounded-lg border border-slate-700 bg-[#080d18] px-3 py-2 text-sm text-white outline-none focus:border-emerald-400 sm:w-40" />
-                <button type="submit" className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-bold text-[#08111b] hover:bg-emerald-300">Analyze</button>
+                <input aria-label="Stock ticker" value={searchSymbol} onChange={(event) => setSearchSymbol(event.target.value.toUpperCase())} placeholder="Ticker e.g. TSLA" maxLength={20} className="w-32 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 sm:w-40" />
+                <button type="submit" className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-[#08111b] hover:bg-indigo-700">Analyze</button>
               </form>
             </div>
 
             <div className="grid min-w-0 gap-3 p-3 lg:grid-cols-12">
-              <section className="min-w-0 rounded-xl border border-slate-800 bg-[#0b1220] p-3 lg:col-span-8">
+              <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:col-span-8">
                 <div className="flex flex-wrap items-end justify-between gap-2">
                   <div>
-                    <p className="text-[10px] font-semibold tracking-widest text-slate-400">LATEST REPORTED PRICE</p>
-                    <p className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">{money(current?.price)}</p>
+                    <p className="text-[10px] font-semibold tracking-widest text-slate-500">LATEST REPORTED PRICE</p>
+                    <p className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{money(current?.price)}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-bold ${(current?.change ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    <p className={`text-sm font-bold ${(current?.change ?? 0) >= 0 ? "text-indigo-600" : "text-rose-400"}`}>
                       {current?.change == null ? "Change unavailable" : `${current.change >= 0 ? "+" : ""}${money(current.change)} (${number(current.changePercent)}%)`}
                     </p>
                     <p className="mt-1 text-[10px] text-slate-500">Updated {lastUpdated || "when data arrives"}</p>
                   </div>
                 </div>
-                <div className="mt-3 h-[260px] overflow-hidden rounded-lg border border-slate-800 bg-[#080d18] p-1 sm:h-[310px]">
+                <div className="mt-3 h-[260px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-1 sm:h-[310px]">
                   <StockChart symbol={selected} />
                 </div>
                 <p className="mt-2 text-[10px] text-slate-500">Quotes and chart data may be delayed or temporarily unavailable.</p>
               </section>
 
               <aside className="grid content-start gap-3 lg:col-span-4">
-                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
+                <section className="rounded-xl border border-slate-200 bg-white p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-bold tracking-widest text-slate-400">STOCKMIND SIGNAL</p>
-                    <button onClick={() => void loadAnalysis(selected)} disabled={analysisLoading} className="rounded-md border border-slate-700 px-2 py-1 text-[10px] text-slate-300 hover:border-emerald-400 disabled:opacity-50">{analysisLoading ? "Checking…" : "Refresh"}</button>
+                    <p className="text-[10px] font-bold tracking-widest text-slate-500">STOCKMIND SIGNAL</p>
+                    <button onClick={() => void loadAnalysis(selected)} disabled={analysisLoading} className="rounded-md border border-slate-300 px-2 py-1 text-[10px] text-slate-700 hover:border-indigo-400 disabled:opacity-50">{analysisLoading ? "Checking…" : "Refresh"}</button>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className={`rounded-lg border px-3 py-2 text-lg font-black ${signal === "BUY" ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-400" : signal === "SELL" ? "border-rose-400/40 bg-rose-400/10 text-rose-400" : "border-amber-400/40 bg-amber-400/10 text-amber-300"}`}>{analysisLoading ? "…" : signal || "HOLD"}</span>
+                    <span className={`rounded-lg border px-3 py-2 text-lg font-black ${signal === "BUY" ? "border-indigo-400/40 bg-indigo-50 text-indigo-700" : signal === "SELL" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{analysisLoading ? "…" : signal || "HOLD"}</span>
                     <div className="text-right">
-                      <p className="text-xl font-black text-white">{number(analysis?.confidencePercent, 0)}%</p>
+                      <p className="text-xl font-black text-slate-900">{number(analysis?.confidencePercent, 0)}%</p>
                       <p className="text-[10px] text-slate-500">Indicator agreement</p>
                     </div>
                   </div>
                   {analysisError && <p className="mt-2 text-xs text-amber-300">{analysisError}</p>}
-                  <p className="mt-2 text-xs leading-5 text-slate-400">{analysis?.reason || (analysisLoading ? "Analysing available indicators…" : "Analysis will appear when data is available.")}</p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">{analysis?.reason || (analysisLoading ? "Analysing available indicators…" : "Analysis will appear when data is available.")}</p>
                 </section>
 
-                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
-                  <p className="text-[10px] font-bold tracking-widest text-slate-400">TECHNICAL SNAPSHOT</p>
+                <section className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-500">TECHNICAL SNAPSHOT</p>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     {[
                       ["TREND", indicators?.trend || "—"],
@@ -947,32 +950,32 @@ export default function Home() {
                       ["MOMENTUM", indicators?.dailyMomentumPercent == null ? "—" : number(indicators.dailyMomentumPercent) + "%"],
                       ["LATEST CLOSE", money(indicators?.latestClose)]
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-lg border border-slate-800 bg-[#101827] px-2 py-2">
+                      <div key={label} className="rounded-lg border border-slate-200 bg-slate-100 px-2 py-2">
                         <p className="text-[9px] font-semibold tracking-wider text-slate-500">{label}</p>
-                        <p className="mt-1 truncate text-sm font-bold text-slate-100">{value}</p>
+                        <p className="mt-1 truncate text-sm font-bold text-slate-900">{value}</p>
                       </div>
                     ))}
                   </div>
                 </section>
 
-                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
-                  <p className="text-[10px] font-bold tracking-widest text-slate-400">RISK REFERENCES</p>
+                <section className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-500">RISK REFERENCES</p>
                   <div className="mt-2 grid grid-cols-3 gap-2">
-                    <div><p className="text-[9px] text-slate-500">REFERENCE</p><p className="mt-1 text-xs font-bold text-white">{money(analysis?.riskManagement?.referencePrice)}</p></div>
+                    <div><p className="text-[9px] text-slate-500">REFERENCE</p><p className="mt-1 text-xs font-bold text-slate-900">{money(analysis?.riskManagement?.referencePrice)}</p></div>
                     <div><p className="text-[9px] text-slate-500">STOP LOSS</p><p className="mt-1 text-xs font-bold text-rose-400">{money(analysis?.riskManagement?.stopLossPrice)}</p></div>
-                    <div><p className="text-[9px] text-slate-500">TAKE PROFIT</p><p className="mt-1 text-xs font-bold text-emerald-400">{money(analysis?.riskManagement?.takeProfitPrice)}</p></div>
+                    <div><p className="text-[9px] text-slate-500">TAKE PROFIT</p><p className="mt-1 text-xs font-bold text-indigo-600">{money(analysis?.riskManagement?.takeProfitPrice)}</p></div>
                   </div>
                   <p className="mt-2 text-[10px] text-slate-500">Reference levels are estimates, not orders or guarantees.</p>
                 </section>
 
-                <section className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
+                <section className="rounded-xl border border-indigo-400/20 bg-indigo-50 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-bold tracking-widest text-emerald-300">ASK STC-AI</p>
-                    <button type="button" onClick={() => setActivePage("ai")} className="text-[10px] font-semibold text-emerald-300 hover:text-emerald-200">Open chat ↗</button>
+                    <p className="text-[10px] font-bold tracking-widest text-indigo-600">ASK STC-AI</p>
+                    <button type="button" onClick={() => setActivePage("ai")} className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-700">Open chat ↗</button>
                   </div>
                   <form onSubmit={(event) => { event.preventDefault(); void sendChat(); }} className="mt-2 flex gap-2">
-                    <input aria-label="Ask STC-AI" value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Ask about ${selected}…`} maxLength={3000} disabled={chatLoading} className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-[#080d18] px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-emerald-400 disabled:opacity-50" />
-                    <button type="submit" disabled={chatLoading || !chatInput.trim()} className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-bold text-[#08111b] disabled:opacity-40">{chatLoading ? "…" : "Ask"}</button>
+                    <input aria-label="Ask STC-AI" value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Ask about ${selected}…`} maxLength={3000} disabled={chatLoading} className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-indigo-400 disabled:opacity-50" />
+                    <button type="submit" disabled={chatLoading || !chatInput.trim()} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-[#08111b] disabled:opacity-40">{chatLoading ? "…" : "Ask"}</button>
                   </form>
                   {chatError && <p className="mt-2 text-[10px] text-amber-300">{chatError}</p>}
                   <p className="mt-2 text-[10px] text-slate-500">AI research only. It does not guarantee trading outcomes.</p>
@@ -981,7 +984,7 @@ export default function Home() {
             </div>
           </section>
 
-          <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
+          <p className="text-xs font-semibold tracking-[0.2em] text-indigo-700">
               STC-AI CONVERSATIONAL ASSISTANT
             </p>
             <h2 className="mt-2 text-3xl font-bold">Ask your stock analyst</h2>
@@ -991,7 +994,7 @@ export default function Home() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-[#f7faf8] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 p-4">
               <div>
                 <p className="font-semibold text-slate-900">STC-AI</p>
                 <p className="mt-1 text-xs text-slate-500">
@@ -1023,21 +1026,21 @@ export default function Home() {
                   <div
                     className={
                       message.role === "user"
-                        ? "max-w-[90%] rounded-2xl rounded-br-sm bg-emerald-700 px-4 py-3 text-sm leading-6 text-white sm:max-w-[80%]"
-                        : "max-w-[95%] rounded-2xl rounded-bl-sm border border-slate-200 bg-[#f7faf8] px-4 py-3 text-sm leading-6 text-slate-800 sm:max-w-[85%]"
+                        ? "max-w-[90%] rounded-2xl rounded-br-sm bg-indigo-700 px-4 py-3 text-sm leading-6 text-white sm:max-w-[80%]"
+                        : "max-w-[95%] rounded-2xl rounded-bl-sm border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 sm:max-w-[85%]"
                     }
                   >
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wider opacity-70">
                       {message.role === "user" ? "You" : "STC-AI"}
                     </p>
-                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                    <div className="break-words [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:font-semibold [&_p]:mb-3 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_strong]:font-bold [&_a]:text-indigo-600 [&_a]:underline [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:p-2 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2"><ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown></div>
                   </div>
                 </div>
               ))}
 
               {chatLoading && (
                 <div className="flex justify-start">
-                  <div className="rounded-xl border border-slate-200 bg-[#f7faf8] px-4 py-3 text-sm text-slate-600">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                     STC-AI is thinking…
                   </div>
                 </div>
@@ -1062,7 +1065,7 @@ export default function Home() {
                     type="button"
                     disabled={chatLoading}
                     onClick={() => setChatInput(suggestion)}
-                    className="rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-50"
+                    className="rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-50"
                   >
                     {suggestion}
                   </button>
@@ -1093,12 +1096,12 @@ export default function Home() {
                   maxLength={3000}
                   rows={2}
                   disabled={chatLoading}
-                  className="min-h-[52px] flex-1 resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
+                  className="min-h-[52px] flex-1 resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100"
                 />
                 <button
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
-                  className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {chatLoading ? "Sending…" : "Send"}
                 </button>
@@ -1117,7 +1120,7 @@ export default function Home() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold tracking-widest text-emerald-700">MARKET INTELLIGENCE</p>
+              <p className="text-xs font-semibold tracking-widest text-indigo-700">MARKET INTELLIGENCE</p>
               <h2 className="mt-2 text-3xl font-bold text-slate-900">Market News</h2>
               <p className="mt-2 text-sm text-slate-600">
                 Financial markets, technology stocks, economic updates and Federal Reserve news.
@@ -1131,7 +1134,7 @@ export default function Home() {
               type="button"
               onClick={() => void loadNews()}
               disabled={newsLoading}
-              className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+              className="rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
             >
               {newsLoading ? "Refreshing…" : "Refresh News"}
             </button>
@@ -1179,7 +1182,7 @@ export default function Home() {
                     className="flex h-full flex-col rounded-2xl border border-slate-200 p-5 transition hover:border-emerald-500 hover:shadow-sm"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-indigo-800">
                         {article.topic}
                       </span>
                       {article.relatedTickers?.slice(0, 3).map((ticker) => (
@@ -1207,7 +1210,7 @@ export default function Home() {
                         href={article.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-4 inline-flex text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+                        className="mt-4 inline-flex text-sm font-semibold text-indigo-700 hover:text-emerald-900"
                       >
                         Read original article ↗
                       </a>
@@ -1245,7 +1248,7 @@ export default function Home() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-[#f7faf8] p-3">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
       <p className="text-[10px] font-semibold tracking-wider text-slate-500">
         {label}
       </p>
