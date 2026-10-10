@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
 import YahooFinance from "yahoo-finance2";
 import { randomUUID } from "crypto";
-import { promises as fs } from "fs";
-import path from "path";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +16,6 @@ const RISK_PER_TRADE = 0.01;
 const STOP_LOSS_PERCENT = 0.03;
 const TAKE_PROFIT_PERCENT = 0.06;
 
-const DB_PATH = path.join(process.cwd(), "data", "paper-trading.json");
 
 type OpenTrade = {
   id: string;
@@ -56,39 +55,87 @@ function initialPortfolio(): Portfolio {
   };
 }
 
-async function readPortfolio(): Promise<Portfolio> {
-  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
 
-  try {
-    const raw = await fs.readFile(DB_PATH, "utf8");
-    const parsed = JSON.parse(raw) as Portfolio;
+function getSql() {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  return neon(connectionString);
+}
+
+async function ensurePortfolioTable() {
+  const sql = getSql();
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS stockmind_portfolio (
+      id TEXT PRIMARY KEY,
+      portfolio JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  return sql;
+}
+
+async function readPortfolio(): Promise<Portfolio> {
+  const sql = await ensurePortfolioTable();
+
+  const rows = await sql`
+    SELECT portfolio
+    FROM stockmind_portfolio
+    WHERE id = 'main'
+  `;
+
+  if (rows.length > 0) {
+    const portfolio = rows[0].portfolio as Portfolio;
 
     if (
-      typeof parsed.cash !== "number" ||
-      !Array.isArray(parsed.openTrades) ||
-      !Array.isArray(parsed.closedTrades)
+      !portfolio ||
+      typeof portfolio.cash !== "number" ||
+      !Array.isArray(portfolio.openTrades) ||
+      !Array.isArray(portfolio.closedTrades)
     ) {
-      throw new Error("Invalid portfolio data");
+      throw new Error("Invalid portfolio data in Neon database.");
     }
 
-    return parsed;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw error;
-    }
-
-    const portfolio = initialPortfolio();
-    await writePortfolio(portfolio);
     return portfolio;
   }
+
+  const portfolio = initialPortfolio();
+
+  await sql`
+    INSERT INTO stockmind_portfolio (id, portfolio)
+    VALUES ('main', ${JSON.stringify(portfolio)}::jsonb)
+    ON CONFLICT (id) DO NOTHING
+  `;
+
+  const savedRows = await sql`
+    SELECT portfolio
+    FROM stockmind_portfolio
+    WHERE id = 'main'
+  `;
+
+  if (savedRows.length === 0) {
+    throw new Error("Unable to initialize the paper-trading portfolio.");
+  }
+
+  return savedRows[0].portfolio as Portfolio;
 }
 
 async function writePortfolio(portfolio: Portfolio) {
-  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+  const sql = await ensurePortfolioTable();
 
-  const tempPath = `${DB_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(portfolio, null, 2));
-  await fs.rename(tempPath, DB_PATH);
+  await sql`
+    INSERT INTO stockmind_portfolio (id, portfolio, updated_at)
+    VALUES ('main', ${JSON.stringify(portfolio)}::jsonb, NOW())
+    ON CONFLICT (id)
+    DO UPDATE SET
+      portfolio = EXCLUDED.portfolio,
+      updated_at = NOW()
+  `;
 }
 
 async function getPrice(symbol: string): Promise<number> {
