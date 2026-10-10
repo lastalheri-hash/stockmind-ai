@@ -25,6 +25,41 @@ type Analysis = {
     dailyMomentumPercent?: number;
     trend?: string;
   };
+  reason?: string;
+  fundamentals?: {
+    marketCap?: number | null;
+    trailingPE?: number | null;
+    forwardPE?: number | null;
+    priceToSales?: number | null;
+    beta?: number | null;
+    dividendYield?: number | null;
+    fiftyTwoWeekLow?: number | null;
+    fiftyTwoWeekHigh?: number | null;
+    totalRevenue?: number | null;
+    revenueGrowth?: number | null;
+    profitMargins?: number | null;
+    grossMargins?: number | null;
+    operatingMargins?: number | null;
+    returnOnEquity?: number | null;
+    totalCash?: number | null;
+    totalDebt?: number | null;
+    freeCashflow?: number | null;
+    analystTargetMean?: number | null;
+    analystOpinions?: number | null;
+    analystRecommendation?: string | null;
+    currency?: string | null;
+    sector?: string | null;
+    industry?: string | null;
+    companyDescription?: string | null;
+  };
+  news?: Array<{
+    id: string;
+    title: string;
+    publisher: string;
+    link: string;
+    publishedAt: string | Date;
+    relatedTickers: string[];
+  }>;
   riskManagement?: {
     referencePrice?: number;
     stopLossPrice?: number;
@@ -39,6 +74,21 @@ type Analysis = {
   error?: string;
   [key: string]: unknown;
 };
+
+function compactMoney(value?: number | null, currency?: string | null): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function percentRatio(value?: number | null): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return `${(value * 100).toFixed(2)}%`;
+}
 
 type PaperTrade = {
   id: string;
@@ -134,6 +184,7 @@ export default function Home() {
   const [activePage, setActivePage] = useState<"overview" | "paper" | "ai" | "news">("overview");
   const [stocks, setStocks] = useState<Record<string, Stock>>({});
   const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [marketTab, setMarketTab] = useState<"gainers" | "losers" | "active">("gainers");
   const [searchSymbol, setSearchSymbol] = useState("AAPL");
   const [newsData, setNewsData] = useState<NewsData | null>(null);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -366,7 +417,6 @@ export default function Home() {
         : "border-amber-400/30 bg-amber-400/10 text-amber-800";
 
   const indicators = analysis?.indicators;
-  const risk = analysis?.riskManagement;
 
   return (
     <main className="min-h-screen bg-[#f7faf8] px-4 py-6 text-slate-900 sm:px-6 md:px-10">
@@ -381,12 +431,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-slate-600">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              loading ? "bg-amber-400" : "bg-emerald-600"
-            }`}
-          />
-          {loading ? "UPDATING QUOTES" : "DASHBOARD READY"}
+
           <button
             onClick={() => void loadStocks()}
             disabled={loading}
@@ -486,41 +531,55 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            {[
-              { title: "Top Gainers", items: marketData?.gainers ?? [] },
-              { title: "Top Losers", items: marketData?.losers ?? [] },
-              { title: "Most Active", items: marketData?.mostActive ?? [] },
-            ].map((group) => (
-              <section key={group.title} className="rounded-2xl border border-slate-200 bg-white p-4">
-                <h3 className="mb-3 font-bold">{group.title}</h3>
-                {group.items.length === 0 ? (
-                  <p className="text-sm text-slate-500">Market data is loading or unavailable.</p>
-                ) : (
-                  <div className="space-y-1">
-                    {group.items.slice(0, 8).map((item) => {
-                      const positive = (item.changePercent ?? 0) >= 0;
-                      return (
-                        <button key={item.symbol} onClick={() => setSelected(item.symbol)} className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left hover:bg-slate-50 ${selected === item.symbol ? "bg-emerald-50" : ""}`}>
-                          <span className="min-w-0">
-                            <span className="block font-semibold">{item.symbol}</span>
-                            <span className="block truncate text-xs text-slate-500">{item.name}</span>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div role="tablist" aria-label="Market movers" className="flex border-b border-slate-200 px-3 pt-3 sm:px-5">
+              {[
+                { id: "gainers", label: "Gainers" },
+                { id: "losers", label: "Losers" },
+                { id: "active", label: "Active" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={marketTab === tab.id}
+                  onClick={() => setMarketTab(tab.id as "gainers" | "losers" | "active")}
+                  className={marketTab === tab.id ? "border-b-2 border-emerald-700 px-4 py-3 text-sm font-bold text-emerald-800" : "border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 hover:text-slate-900"}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {(() => {
+              const items = marketTab === "gainers"
+                ? marketData?.gainers ?? []
+                : marketTab === "losers"
+                  ? marketData?.losers ?? []
+                  : marketData?.mostActive ?? [];
+              return items.length === 0 ? (
+                <p className="p-5 text-sm text-slate-500">Market data is loading or unavailable.</p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {items.slice(0, 8).map((item) => {
+                    const positive = (item.changePercent ?? 0) >= 0;
+                    return (
+                      <button key={item.symbol} onClick={() => setSelected(item.symbol)} className={"flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 sm:px-5 " + (selected === item.symbol ? "bg-emerald-50" : "")}>
+                        <span className="min-w-0">
+                          <span className="block font-semibold">{item.symbol}</span>
+                          <span className="block truncate text-xs text-slate-500">{item.name}</span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block text-sm font-semibold">{money(item.price)}</span>
+                          <span className={"text-xs " + (positive ? "text-emerald-700" : "text-rose-700")}>
+                            {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
                           </span>
-                          <span className="shrink-0 text-right">
-                            <span className="block text-sm font-semibold">{money(item.price)}</span>
-                            <span className={`text-xs ${positive ? "text-emerald-700" : "text-rose-700"}`}>
-                              {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
-                            </span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            ))}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
-
           <p className="text-xs text-slate-500">
             {marketData?.changePeriod ?? "Percentage changes reflect the latest reported market session, not a rolling 24-hour return."}
           </p>
@@ -643,30 +702,94 @@ export default function Home() {
                     }
                   />
                   <Metric
-                    label="REFERENCE PRICE"
-                    value={money(risk?.referencePrice ?? indicators?.latestClose)}
+                    label="LATEST PRICE"
+                    value={money(indicators?.latestClose)}
                   />
                 </div>
 
-                <div className="mt-4 rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
-                  <p className="text-xs font-semibold tracking-widest text-slate-600">
-                    RISK MANAGEMENT LEVELS
+                <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+                  <p className="text-xs font-semibold tracking-widest text-slate-500">WHY THIS SIGNAL?</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {analysis.reason || "The signal is based on the available technical indicators. Review the trend, moving averages and RSI before making a decision."}
                   </p>
-                  <div className="mt-4 flex justify-between gap-3 text-sm">
-                    <span className="text-rose-700">Stop loss</span>
-                    <strong>{money(risk?.stopLossPrice)}</strong>
-                  </div>
-                  <div className="mt-3 flex justify-between gap-3 text-sm">
-                    <span className="text-emerald-700">Take profit</span>
-                    <strong>{money(risk?.takeProfitPrice)}</strong>
-                  </div>
-                  <div className="mt-3 flex justify-between gap-3 text-sm">
-                    <span className="text-slate-600">Reward / risk</span>
-                    <strong>
-                      {number(risk?.rewardToRiskRatio, 1)}:1
-                    </strong>
-                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Rule-based analysis, not a prediction of guaranteed profit.
+                  </p>
                 </div>
+
+                <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+                  <p className="text-xs font-semibold tracking-widest text-slate-500">COMPANY FUNDAMENTALS</p>
+                  {analysis.fundamentals ? (
+                    <>
+                      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <Metric label="MARKET CAP" value={compactMoney(analysis.fundamentals.marketCap, analysis.fundamentals.currency)} />
+                        <Metric label="TRAILING P/E" value={number(analysis.fundamentals.trailingPE)} />
+                        <Metric label="FORWARD P/E" value={number(analysis.fundamentals.forwardPE)} />
+                        <Metric label="REVENUE" value={compactMoney(analysis.fundamentals.totalRevenue, analysis.fundamentals.currency)} />
+                        <Metric label="PROFIT MARGIN" value={percentRatio(analysis.fundamentals.profitMargins)} />
+                        <Metric label="REVENUE GROWTH" value={percentRatio(analysis.fundamentals.revenueGrowth)} />
+                        <Metric label="OPERATING MARGIN" value={percentRatio(analysis.fundamentals.operatingMargins)} />
+                        <Metric label="RETURN ON EQUITY" value={percentRatio(analysis.fundamentals.returnOnEquity)} />
+                        <Metric label="FREE CASH FLOW" value={compactMoney(analysis.fundamentals.freeCashflow, analysis.fundamentals.currency)} />
+                        <Metric label="TOTAL DEBT" value={compactMoney(analysis.fundamentals.totalDebt, analysis.fundamentals.currency)} />
+                        <Metric label="52-WEEK LOW" value={money(analysis.fundamentals.fiftyTwoWeekLow)} />
+                        <Metric label="52-WEEK HIGH" value={money(analysis.fundamentals.fiftyTwoWeekHigh)} />
+                      </div>
+                      {(analysis.fundamentals.sector || analysis.fundamentals.industry) && (
+                        <p className="mt-4 text-xs text-slate-500">
+                          {[analysis.fundamentals.sector, analysis.fundamentals.industry].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                      {analysis.fundamentals.analystRecommendation && (
+                        <p className="mt-2 text-sm text-slate-600">
+                          Analyst consensus: <strong>{analysis.fundamentals.analystRecommendation}</strong>
+                          {analysis.fundamentals.analystOpinions ? ` (${analysis.fundamentals.analystOpinions} opinions)` : ""}
+                          {analysis.fundamentals.analystTargetMean != null ? ` · Average target ${money(analysis.fundamentals.analystTargetMean)}` : ""}
+                        </p>
+                      )}
+                      {analysis.fundamentals.companyDescription && (
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          {analysis.fundamentals.companyDescription}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-500">Company fundamentals are unavailable for this symbol right now.</p>
+                  )}
+                  <p className="mt-3 text-xs text-slate-500">
+                    Metrics may be unavailable for some symbols. Valuation and analyst targets are not guarantees of future performance.
+                  </p>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+                  <p className="text-xs font-semibold tracking-widest text-slate-500">LATEST STOCK NEWS</p>
+                  {analysis.news && analysis.news.length > 0 ? (
+                    <div className="mt-3 divide-y divide-slate-100">
+                      {analysis.news.map((article) => (
+                        <a
+                          key={article.id}
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block py-3 first:pt-0 hover:text-emerald-800"
+                        >
+                          <span className="text-sm font-semibold leading-5">{article.title}</span>
+                          <span className="mt-1 block text-xs text-slate-500">
+                            {article.publisher}
+                            {article.publishedAt && !Number.isNaN(new Date(article.publishedAt).getTime())
+                              ? ` · ${new Date(article.publishedAt).toLocaleDateString()}`
+                              : ""}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-500">No recent company news was returned. This does not mean there is no news.</p>
+                  )}
+                  <p className="mt-3 text-xs text-slate-500">News supplied by Yahoo Finance. Headlines alone do not determine the trading signal.</p>
+                </div>
+
+
               </>
             ) : (
               <div className="mt-6 text-sm text-slate-600">
