@@ -287,37 +287,37 @@ export default function Home() {
   const signal = analysis?.signal;
   const signalClass =
     signal === "BUY"
-      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
       : signal === "SELL"
-        ? "border-rose-400/30 bg-rose-400/10 text-rose-300"
-        : "border-amber-400/30 bg-amber-400/10 text-amber-300";
+        ? "border-rose-400/30 bg-rose-400/10 text-rose-700"
+        : "border-amber-400/30 bg-amber-400/10 text-amber-800";
 
   const indicators = analysis?.indicators;
   const risk = analysis?.riskManagement;
 
   return (
-    <main className="min-h-screen bg-[#080b12] px-4 py-6 text-white sm:px-6 md:px-10">
-      <header className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <main className="min-h-screen bg-[#f7faf8] px-4 py-6 text-slate-900 sm:px-6 md:px-10">
+      <header className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            StockMind <span className="text-emerald-400">AI</span>
+            StockMind <span className="text-emerald-700">AI</span>
           </h1>
-          <p className="mt-2 text-xs tracking-[0.18em] text-slate-400">
-            INTELLIGENT U.S. STOCK ANALYTICS
+          <p className="mt-2 text-xs tracking-[0.18em] text-slate-600">
+            EQUITY INTELLIGENCE  /  PAPER TRADING LAB
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        <div className="flex items-center gap-3 text-xs text-slate-600">
           <span
             className={`h-2 w-2 rounded-full ${
-              loading ? "bg-amber-400" : "bg-emerald-400"
+              loading ? "bg-amber-400" : "bg-emerald-600"
             }`}
           />
           {loading ? "UPDATING QUOTES" : "DASHBOARD READY"}
           <button
             onClick={() => void loadStocks()}
             disabled={loading}
-            className="rounded-lg border border-white/10 px-3 py-2 text-white hover:bg-white/5 disabled:opacity-50"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900 hover:bg-emerald-50 disabled:opacity-50"
           >
             Refresh
           </button>
@@ -325,15 +325,15 @@ export default function Home() {
       </header>
 
       <section className="mx-auto mt-8 max-w-7xl">
-        <p className="text-xs font-semibold tracking-[0.2em] text-emerald-400">
-          YOUR TRADING WORKSPACE
+        <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
+          STOCKMIND WORKSPACE
         </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              Market Intelligence
+              Market Overview
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               Technical analysis, risk levels and simulated trading research.
             </p>
           </div>
@@ -343,7 +343,7 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             {error}
           </div>
         )}
@@ -357,10 +357,10 @@ export default function Home() {
               <button
                 key={item.symbol}
                 onClick={() => setSelected(item.symbol)}
-                className={`rounded-2xl border p-4 text-left transition hover:border-emerald-400/40 ${
+                className={`rounded-2xl border p-4 text-left transition hover:border-emerald-300 ${
                   selected === item.symbol
-                    ? "border-emerald-400/50 bg-emerald-400/5"
-                    : "border-white/10 bg-[#111722]"
+                    ? "border-emerald-300 bg-emerald-50"
+                    : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -370,8 +370,8 @@ export default function Home() {
                       stock?.changePercent == null
                         ? "text-slate-500"
                         : positive
-                          ? "text-emerald-400"
-                          : "text-rose-400"
+                          ? "text-emerald-700"
+                          : "text-rose-700"
                     }`}
                   >
                     {stock?.changePercent == null
@@ -389,14 +389,14 @@ export default function Home() {
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-3">
-          <section className="min-w-0 rounded-2xl border border-white/10 bg-[#111722] p-4 sm:p-6 xl:col-span-2">
+          <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 xl:col-span-2">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs tracking-widest text-slate-400">
+                <p className="text-xs tracking-widest text-slate-600">
                   SELECTED ASSET
                 </p>
                 <h3 className="mt-2 text-3xl font-bold">{selected}</h3>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-slate-600">
                   {current?.name ||
                     watchlist.find((item) => item.symbol === selected)?.name}
                 </p>
@@ -406,8 +406,8 @@ export default function Home() {
                 <p
                   className={`mt-2 text-sm ${
                     (current?.change ?? 0) >= 0
-                      ? "text-emerald-400"
-                      : "text-rose-400"
+                      ? "text-emerald-700"
+                      : "text-rose-700"
                   }`}
                 >
                   {current?.change == null
@@ -420,7 +420,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-white/10 bg-[#080b12] p-3">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-3">
               <StockChart symbol={selected} />
             </div>
 
@@ -430,10 +430,10 @@ export default function Home() {
             </p>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-[#111722] p-4 sm:p-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs tracking-widest text-slate-400">
+                <p className="text-xs tracking-widest text-slate-600">
                   TECHNICAL RESEARCH
                 </p>
                 <h3 className="mt-2 text-xl font-bold">AI Market Analyst</h3>
@@ -441,22 +441,22 @@ export default function Home() {
               <button
                 onClick={() => void loadAnalysis(selected)}
                 disabled={analysisLoading}
-                className="rounded-lg border border-white/10 px-3 py-2 text-xs hover:bg-white/5 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs hover:bg-emerald-50 disabled:opacity-50"
               >
                 Re-analyse
               </button>
             </div>
 
             {analysisLoading ? (
-              <div className="mt-6 rounded-xl border border-white/10 bg-[#080b12] p-6 text-sm text-slate-400">
+              <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-6 text-sm text-slate-600">
                 Analysing technical indicators and risk conditions…
               </div>
             ) : analysisError ? (
-              <div className="mt-6 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
-                <p className="text-sm text-amber-300">
+              <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm text-amber-800">
                   Analysis unavailable
                 </p>
-                <p className="mt-2 text-sm text-slate-400">{analysisError}</p>
+                <p className="mt-2 text-sm text-slate-600">{analysisError}</p>
               </div>
             ) : analysis ? (
               <>
@@ -511,20 +511,20 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="mt-4 rounded-xl border border-white/10 bg-[#080b12] p-4">
-                  <p className="text-xs font-semibold tracking-widest text-slate-400">
+                <div className="mt-4 rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
+                  <p className="text-xs font-semibold tracking-widest text-slate-600">
                     RISK MANAGEMENT LEVELS
                   </p>
                   <div className="mt-4 flex justify-between gap-3 text-sm">
-                    <span className="text-rose-300">Stop loss</span>
+                    <span className="text-rose-700">Stop loss</span>
                     <strong>{money(risk?.stopLossPrice)}</strong>
                   </div>
                   <div className="mt-3 flex justify-between gap-3 text-sm">
-                    <span className="text-emerald-300">Take profit</span>
+                    <span className="text-emerald-700">Take profit</span>
                     <strong>{money(risk?.takeProfitPrice)}</strong>
                   </div>
                   <div className="mt-3 flex justify-between gap-3 text-sm">
-                    <span className="text-slate-400">Reward / risk</span>
+                    <span className="text-slate-600">Reward / risk</span>
                     <strong>
                       {number(risk?.rewardToRiskRatio, 1)}:1
                     </strong>
@@ -532,7 +532,7 @@ export default function Home() {
                 </div>
               </>
             ) : (
-              <div className="mt-6 text-sm text-slate-400">
+              <div className="mt-6 text-sm text-slate-600">
                 No analysis is available for this stock yet.
               </div>
             )}
@@ -544,34 +544,34 @@ export default function Home() {
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-white/10 bg-[#111722] p-5 sm:p-6">
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs tracking-widest text-emerald-400">
+              <p className="text-xs tracking-widest text-emerald-700">
                 SIMULATED TRADING
               </p>
               <h3 className="mt-2 text-2xl font-bold">Paper Trading Desk</h3>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-slate-600">
                 Practice with virtual money. No real brokerage orders are placed.
               </p>
             </div>
             <button
               onClick={() => void loadPaperPortfolio()}
               disabled={paperLoading || paperBusy}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-emerald-50 disabled:opacity-50"
             >
               {paperLoading ? "Refreshing…" : "Refresh portfolio"}
             </button>
           </div>
 
           {paperError && (
-            <div className="mt-4 rounded-xl border border-rose-400/20 bg-rose-400/5 p-3 text-sm text-rose-300">
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
               {paperError}
             </div>
           )}
 
           {paperMessage && (
-            <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-sm text-emerald-300">
+            <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-50 p-3 text-sm text-emerald-700">
               {paperMessage}
             </div>
           )}
@@ -603,16 +603,16 @@ export default function Home() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-[#080b12] p-4">
+            <div className="rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
               <h4 className="font-semibold">Open a virtual position</h4>
-              <p className="mt-2 text-sm text-slate-400">
-                Selected stock: <strong className="text-white">{selected}</strong>
+              <p className="mt-2 text-sm text-slate-600">
+                Selected stock: <strong className="text-slate-900">{selected}</strong>
               </p>
-              <p className="mt-1 text-sm text-slate-400">
-                Quote: <strong className="text-white">{money(current?.price)}</strong>
+              <p className="mt-1 text-sm text-slate-600">
+                Quote: <strong className="text-slate-900">{money(current?.price)}</strong>
               </p>
 
-              <label className="mt-4 block text-xs text-slate-400" htmlFor="paper-quantity">
+              <label className="mt-4 block text-xs text-slate-600" htmlFor="paper-quantity">
                 Number of shares
               </label>
               <input
@@ -623,13 +623,13 @@ export default function Home() {
                 inputMode="numeric"
                 value={quantity}
                 onChange={(event) => setQuantity(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-[#111722] px-3 py-3 text-white outline-none focus:border-emerald-400/50"
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-slate-900 outline-none focus:border-emerald-300"
               />
 
               <button
                 onClick={() => void openPaperTrade()}
                 disabled={paperBusy || paperLoading}
-                className="mt-4 w-full rounded-lg bg-emerald-400 px-4 py-3 font-bold text-[#080b12] hover:bg-emerald-300 disabled:opacity-50"
+                className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 font-bold text-slate-900 hover:bg-emerald-300 disabled:opacity-50"
               >
                 {paperBusy ? "Processing…" : "Open paper trade"}
               </button>
@@ -640,7 +640,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#080b12] p-4 lg:col-span-2">
+            <div className="rounded-xl border border-slate-200 bg-[#f7faf8] p-4 lg:col-span-2">
               <h4 className="font-semibold">Open positions</h4>
 
               {!paper?.openTrades?.length ? (
@@ -653,7 +653,7 @@ export default function Home() {
                     const pnl = (trade.currentPrice - trade.entryPrice) * trade.quantity;
 
                     return (
-                      <div key={trade.id} className="rounded-lg border border-white/10 p-3">
+                      <div key={trade.id} className="rounded-lg border border-slate-200 p-3">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="font-bold">{trade.symbol} · {trade.quantity} shares</p>
@@ -662,13 +662,13 @@ export default function Home() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className={pnl >= 0 ? "font-semibold text-emerald-400" : "font-semibold text-rose-400"}>
+                            <p className={pnl >= 0 ? "font-semibold text-emerald-700" : "font-semibold text-rose-700"}>
                               {pnl >= 0 ? "+" : ""}{money(pnl)}
                             </p>
                             <button
                               onClick={() => void closePaperTrade(trade.id)}
                               disabled={paperBusy}
-                              className="mt-2 rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-300 hover:bg-rose-400/10 disabled:opacity-50"
+                              className="mt-2 rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-700 hover:bg-rose-400/10 disabled:opacity-50"
                             >
                               Close position
                             </button>
@@ -687,7 +687,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-white/10 bg-[#080b12] p-4">
+          <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
             <h4 className="font-semibold">Closed trade history</h4>
 
             {!paper?.closedTrades?.length ? (
@@ -704,7 +704,7 @@ export default function Home() {
                         Exit {money(trade.exitPrice)} · {trade.closeReason || "CLOSED"}
                       </p>
                     </div>
-                    <p className={trade.realizedPnl >= 0 ? "font-semibold text-emerald-400" : "font-semibold text-rose-400"}>
+                    <p className={trade.realizedPnl >= 0 ? "font-semibold text-emerald-700" : "font-semibold text-rose-700"}>
                       {trade.realizedPnl >= 0 ? "+" : ""}{money(trade.realizedPnl)}
                     </p>
                   </div>
@@ -721,7 +721,7 @@ export default function Home() {
           </p>
         </section>
 
-        <footer className="mt-8 border-t border-white/10 pt-5 text-xs leading-6 text-slate-500">
+        <footer className="mt-8 border-t border-slate-200 pt-5 text-xs leading-6 text-slate-500">
           <p>StockMind AI · Yahoo Finance market data · Five-stock watchlist</p>
           <p>
             Quotes may be delayed. Paper trading is simulated; no real orders
@@ -735,7 +735,7 @@ export default function Home() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-xl border border-white/10 bg-[#080b12] p-3">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-[#f7faf8] p-3">
       <p className="text-[10px] font-semibold tracking-wider text-slate-500">
         {label}
       </p>

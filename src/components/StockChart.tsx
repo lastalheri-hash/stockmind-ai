@@ -41,25 +41,25 @@ export default function StockChart({ symbol }: { symbol: string }) {
       width: Math.max(container.clientWidth, 300),
       height: 260,
       layout: {
-        background: { type: ColorType.Solid, color: "#080b12" },
-        textColor: "#94a3b8",
+        background: { type: ColorType.Solid, color: "#ffffff" },
+        textColor: "#475569",
       },
       grid: {
-        vertLines: { color: "#18202d" },
-        horzLines: { color: "#18202d" },
+        vertLines: { color: "#e2e8f0" },
+        horzLines: { color: "#e2e8f0" },
       },
-      rightPriceScale: { borderColor: "#263244" },
-      timeScale: { borderColor: "#263244" },
+      rightPriceScale: { borderColor: "#cbd5e1" },
+      timeScale: { borderColor: "#cbd5e1" },
       crosshair: {
-        vertLine: { color: "#64748b" },
-        horzLine: { color: "#64748b" },
+        vertLine: { color: "#94a3b8" },
+        horzLine: { color: "#94a3b8" },
       },
     });
 
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#34d399",
-      topColor: "rgba(52, 211, 153, 0.30)",
-      bottomColor: "rgba(52, 211, 153, 0.01)",
+      lineColor: "#059669",
+      topColor: "rgba(5, 150, 105, 0.18)",
+      bottomColor: "rgba(5, 150, 105, 0.01)",
       lineWidth: 2,
     });
 
@@ -171,19 +171,19 @@ export default function StockChart({ symbol }: { symbol: string }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-600">
           Historical closing prices
         </p>
 
-        <div className="flex gap-1 rounded-lg bg-[#080b12] p-1">
+        <div className="flex gap-1 rounded-lg bg-white p-1">
           {ranges.map((item) => (
             <button
               key={item.value}
               onClick={() => setRange(item.value)}
               className={`rounded-md px-3 py-2 text-xs font-semibold ${
                 range === item.value
-                  ? "bg-emerald-400 text-[#080b12]"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-600 hover:text-emerald-800"
               }`}
             >
               {item.label}
@@ -196,14 +196,14 @@ export default function StockChart({ symbol }: { symbol: string }) {
         <div ref={containerRef} className="w-full" />
 
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#080b12]/70 text-sm text-slate-300">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-slate-600">
             Loading historical prices…
           </div>
         )}
       </div>
 
       {error && (
-        <p className="mt-3 text-sm text-amber-300">{error}</p>
+        <p className="mt-3 text-sm text-amber-800">{error}</p>
       )}
 
       <p className="mt-3 text-xs text-slate-500">
