@@ -481,36 +481,36 @@ export default function Home() {
   const indicators = analysis?.indicators;
 
   return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-6 text-slate-900 sm:px-6 md:px-10">
-      <header className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+    <main className="min-h-screen bg-[#080d18] px-3 py-3 text-slate-100 sm:px-5 md:px-7">
+      <header className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            StockMind <span className="text-emerald-700">AI</span>
+          <h1 className="text-2xl font-black tracking-tight text-white">
+            StockMind <span className="text-emerald-400">AI</span>
           </h1>
-          <p className="mt-2 text-xs tracking-[0.18em] text-slate-600">
+          <p className="mt-1 text-[10px] tracking-[0.18em] text-slate-400">
             EQUITY INTELLIGENCE  /  MARKET RESEARCH
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-600">
+        <div className="flex items-center gap-3 text-xs text-slate-300">
 
           <button
             onClick={() => void loadStocks()}
             disabled={loading}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900 hover:bg-emerald-50 disabled:opacity-50"
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 hover:border-emerald-400 disabled:opacity-50"
           >
             Refresh
           </button>
         </div>
       </header>
 
-      <nav aria-label="Main navigation" className="mx-auto mt-5 flex max-w-7xl flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+      <nav aria-label="Main navigation" className="mx-auto mt-3 flex max-w-[1600px] flex-wrap gap-1 rounded-xl border border-slate-800 bg-[#101827] p-1">
       <button onClick={() => setActivePage("overview")} className={activePage === "overview" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Overview</button>
       <button onClick={() => setActivePage("ai")} className={activePage === "ai" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>STC-AI</button>
       <button onClick={() => setActivePage("news")} className={activePage === "news" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Market News</button>
     </nav>
 
-    <section className="mx-auto mt-8 max-w-7xl">
+    <section className="mx-auto mt-3 max-w-[1600px]">
       {activePage === "overview" && (
       <>
         <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
@@ -872,7 +872,116 @@ export default function Home() {
       {activePage === "ai" && (
         <section className="mx-auto max-w-5xl">
           <div className="mb-6">
-            <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
+  
+          {/* STOCKMIND_FIRST_SCREEN_TERMINAL */}
+          <section className="mb-5 overflow-hidden rounded-2xl border border-slate-800 bg-[#101827] shadow-2xl shadow-black/20">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.22em] text-emerald-400">STOCKMIND TERMINAL</p>
+                <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                  <h2 className="text-xl font-black text-white">{selected}</h2>
+                  <span className="text-xs text-slate-400">{current?.name || "Loading company…"}</span>
+                  <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">{current?.marketState || "Market status unavailable"}</span>
+                </div>
+              </div>
+              <form onSubmit={(event) => {
+                event.preventDefault();
+                const ticker = searchSymbol.trim().toUpperCase();
+                if (!/^[A-Z0-9.^=-]{1,20}$/.test(ticker)) {
+                  setError("Enter a valid stock ticker.");
+                  return;
+                }
+                setError("");
+                setSelected(ticker);
+              }} className="flex min-w-0 gap-2">
+                <input aria-label="Stock ticker" value={searchSymbol} onChange={(event) => setSearchSymbol(event.target.value.toUpperCase())} placeholder="Ticker e.g. TSLA" maxLength={20} className="w-32 rounded-lg border border-slate-700 bg-[#080d18] px-3 py-2 text-sm text-white outline-none focus:border-emerald-400 sm:w-40" />
+                <button type="submit" className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-bold text-[#08111b] hover:bg-emerald-300">Analyze</button>
+              </form>
+            </div>
+
+            <div className="grid min-w-0 gap-3 p-3 lg:grid-cols-12">
+              <section className="min-w-0 rounded-xl border border-slate-800 bg-[#0b1220] p-3 lg:col-span-8">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-slate-400">LATEST REPORTED PRICE</p>
+                    <p className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">{money(current?.price)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-bold ${(current?.change ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {current?.change == null ? "Change unavailable" : `${current.change >= 0 ? "+" : ""}${money(current.change)} (${number(current.changePercent)}%)`}
+                    </p>
+                    <p className="mt-1 text-[10px] text-slate-500">Updated {lastUpdated || "when data arrives"}</p>
+                  </div>
+                </div>
+                <div className="mt-3 h-[260px] overflow-hidden rounded-lg border border-slate-800 bg-[#080d18] p-1 sm:h-[310px]">
+                  <StockChart symbol={selected} />
+                </div>
+                <p className="mt-2 text-[10px] text-slate-500">Quotes and chart data may be delayed or temporarily unavailable.</p>
+              </section>
+
+              <aside className="grid content-start gap-3 lg:col-span-4">
+                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold tracking-widest text-slate-400">STOCKMIND SIGNAL</p>
+                    <button onClick={() => void loadAnalysis(selected)} disabled={analysisLoading} className="rounded-md border border-slate-700 px-2 py-1 text-[10px] text-slate-300 hover:border-emerald-400 disabled:opacity-50">{analysisLoading ? "Checking…" : "Refresh"}</button>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className={`rounded-lg border px-3 py-2 text-lg font-black ${signal === "BUY" ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-400" : signal === "SELL" ? "border-rose-400/40 bg-rose-400/10 text-rose-400" : "border-amber-400/40 bg-amber-400/10 text-amber-300"}`}>{analysisLoading ? "…" : signal || "HOLD"}</span>
+                    <div className="text-right">
+                      <p className="text-xl font-black text-white">{number(analysis?.confidencePercent, 0)}%</p>
+                      <p className="text-[10px] text-slate-500">Indicator agreement</p>
+                    </div>
+                  </div>
+                  {analysisError && <p className="mt-2 text-xs text-amber-300">{analysisError}</p>}
+                  <p className="mt-2 text-xs leading-5 text-slate-400">{analysis?.reason || (analysisLoading ? "Analysing available indicators…" : "Analysis will appear when data is available.")}</p>
+                </section>
+
+                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400">TECHNICAL SNAPSHOT</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {[
+                      ["TREND", indicators?.trend || "—"],
+                      ["RSI (14)", number(indicators?.rsi14)],
+                      ["SMA 20", money(indicators?.sma20)],
+                      ["SMA 50", money(indicators?.sma50)],
+                      ["MOMENTUM", indicators?.dailyMomentumPercent == null ? "—" : number(indicators.dailyMomentumPercent) + "%"],
+                      ["LATEST CLOSE", money(indicators?.latestClose)]
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-lg border border-slate-800 bg-[#101827] px-2 py-2">
+                        <p className="text-[9px] font-semibold tracking-wider text-slate-500">{label}</p>
+                        <p className="mt-1 truncate text-sm font-bold text-slate-100">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-slate-800 bg-[#0b1220] p-3">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400">RISK REFERENCES</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div><p className="text-[9px] text-slate-500">REFERENCE</p><p className="mt-1 text-xs font-bold text-white">{money(analysis?.riskManagement?.referencePrice)}</p></div>
+                    <div><p className="text-[9px] text-slate-500">STOP LOSS</p><p className="mt-1 text-xs font-bold text-rose-400">{money(analysis?.riskManagement?.stopLossPrice)}</p></div>
+                    <div><p className="text-[9px] text-slate-500">TAKE PROFIT</p><p className="mt-1 text-xs font-bold text-emerald-400">{money(analysis?.riskManagement?.takeProfitPrice)}</p></div>
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">Reference levels are estimates, not orders or guarantees.</p>
+                </section>
+
+                <section className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold tracking-widest text-emerald-300">ASK STC-AI</p>
+                    <button type="button" onClick={() => setActivePage("ai")} className="text-[10px] font-semibold text-emerald-300 hover:text-emerald-200">Open chat ↗</button>
+                  </div>
+                  <form onSubmit={(event) => { event.preventDefault(); void sendChat(); }} className="mt-2 flex gap-2">
+                    <input aria-label="Ask STC-AI" value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Ask about ${selected}…`} maxLength={3000} disabled={chatLoading} className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-[#080d18] px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-emerald-400 disabled:opacity-50" />
+                    <button type="submit" disabled={chatLoading || !chatInput.trim()} className="rounded-lg bg-emerald-400 px-3 py-2 text-xs font-bold text-[#08111b] disabled:opacity-40">{chatLoading ? "…" : "Ask"}</button>
+                  </form>
+                  {chatError && <p className="mt-2 text-[10px] text-amber-300">{chatError}</p>}
+                  <p className="mt-2 text-[10px] text-slate-500">AI research only. It does not guarantee trading outcomes.</p>
+                </section>
+              </aside>
+            </div>
+          </section>
+
+          <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
               STC-AI CONVERSATIONAL ASSISTANT
             </p>
             <h2 className="mt-2 text-3xl font-bold">Ask your stock analyst</h2>
