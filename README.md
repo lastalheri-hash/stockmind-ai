@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockMind AI
 
-## Getting Started
+AI-powered US stock research and decision support for retail traders.
 
-First, run the development server:
+StockMind AI combines technical analysis, company fundamentals, analyst consensus, market news, and conversational AI in one research workspace.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Live Demo
+https://stockmind-ai-eight.vercel.app/
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## GitHub Repository
+https://github.com/lastalheri-hash/stockmind-ai
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Features
+- Technical indicators: RSI 14, SMA 20, SMA 50, and daily momentum.
+- Rule-based BUY, SELL, and HOLD signals.
+- Company fundamentals and analyst recommendations when data is available.
+- Stock-related news for additional research context.
+- STC-AI conversational research assistant powered by Groq.
+- Signal Agreement to compare technical signals with analyst consensus.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How It Works
+1. Select a US stock ticker.
+2. Review technical indicators and the generated signal.
+3. Explore company fundamentals and available news.
+4. Ask STC-AI questions about the stock.
+5. Review risks and make your own informed decisions.
 
-## Learn More
+## Technology Stack
+- Next.js
+- React
+- TypeScript
+- Yahoo Finance via yahoo-finance2
+- Groq API
+- Vercel
 
-To learn more about Next.js, take a look at the following resources:
+## Local Setup
+Install dependencies:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Create a .env.local file with:
 
-## Deploy on Vercel
+    GROQ_API_KEY=your_groq_api_key
+    GROQ_MODEL=openai/gpt-oss-120b
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Start the development server:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    npm run dev
+
+## Limitations
+Market data may be delayed, incomplete, or unavailable. AI responses can be inaccurate. The application does not claim verified trading profitability or automated order execution.
+
+Bitget-specific market-data and execution integrations are not claimed as implemented in this version.
+
+## Responsible Use
+StockMind AI is a research tool, not personalized financial advice. BUY, SELL, and HOLD signals do not guarantee future results. Always verify important information and consider the risks before trading.
+
+## Project Goal
+Make stock research easier to understand while keeping uncertainty visible and human judgment central.
