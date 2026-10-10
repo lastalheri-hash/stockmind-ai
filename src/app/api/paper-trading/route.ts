@@ -4,8 +4,6 @@ import YahooFinance from "yahoo-finance2";
 import { randomUUID } from "crypto";
 
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 const yahoo = new YahooFinance();
 
