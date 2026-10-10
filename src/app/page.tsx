@@ -99,6 +99,7 @@ const watchlist = [
 
 export default function Home() {
   const [selected, setSelected] = useState("AAPL");
+  const [activePage, setActivePage] = useState<"overview" | "paper" | "ai" | "news">("overview");
   const [stocks, setStocks] = useState<Record<string, Stock>>({});
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -324,7 +325,16 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto mt-8 max-w-7xl">
+      <nav aria-label="Main navigation" className="mx-auto mt-5 flex max-w-7xl flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+      <button onClick={() => setActivePage("overview")} className={activePage === "overview" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Overview</button>
+      <button onClick={() => setActivePage("paper")} className={activePage === "paper" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Paper Trading</button>
+      <button onClick={() => setActivePage("ai")} className={activePage === "ai" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>STC-AI</button>
+      <button onClick={() => setActivePage("news")} className={activePage === "news" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Market News</button>
+    </nav>
+
+    <section className="mx-auto mt-8 max-w-7xl">
+      {activePage === "overview" && (
+      <>
         <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
           STOCKMIND WORKSPACE
         </p>
@@ -544,7 +554,11 @@ export default function Home() {
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        </>
+      )}
+
+      {activePage === "paper" && (
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs tracking-widest text-emerald-700">
@@ -721,7 +735,48 @@ export default function Home() {
           </p>
         </section>
 
-        <footer className="mt-8 border-t border-slate-200 pt-5 text-xs leading-6 text-slate-500">
+        )}
+
+
+      {activePage === "ai" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold tracking-widest text-emerald-700">STOCK INTELLIGENCE</p>
+          <h2 className="mt-2 text-3xl font-bold text-slate-900">STC-AI</h2>
+          <p className="mt-2 text-sm text-slate-600">Your stock analysis workspace.</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"].map((symbol) => (
+              <button key={symbol} onClick={() => { setSelected(symbol); void loadAnalysis(symbol); }} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-500">{symbol}</button>
+            ))}
+          </div>
+          <div className="mt-5 rounded-xl bg-slate-50 p-4">
+            <p className="font-semibold text-slate-900">Analysis for {selected}</p>
+            {analysisLoading && <p className="mt-2 text-sm text-slate-500">Loading analysis...</p>}
+            {analysisError && <p className="mt-2 text-sm text-rose-700">{analysisError}</p>}
+            {analysis && !analysisLoading && <pre className="mt-3 whitespace-pre-wrap break-words text-sm text-slate-700">{JSON.stringify(analysis, null, 2)}</pre>}
+            {!analysis && !analysisLoading && !analysisError && <p className="mt-2 text-sm text-slate-500">Choose a stock to load its analysis.</p>}
+          </div>
+          <p className="mt-4 text-xs text-slate-500">This uses the existing analysis service. Conversational AI will need a connected AI model.</p>
+        </section>
+      )}
+
+      {activePage === "news" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold tracking-widest text-emerald-700">MARKET INTELLIGENCE</p>
+          <h2 className="mt-2 text-3xl font-bold text-slate-900">Market News</h2>
+          <p className="mt-2 text-sm text-slate-600">Choose a stock to view its overview while we connect a real news feed.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"].map((symbol) => (
+              <button key={symbol} onClick={() => { setSelected(symbol); setActivePage("overview"); }} className="rounded-xl border border-slate-200 p-4 text-left hover:border-emerald-500">
+                <span className="font-semibold text-slate-900">{symbol}</span>
+                <p className="mt-1 text-xs text-slate-500">Open stock overview</p>
+              </button>
+            ))}
+          </div>
+          <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Live headlines are not connected yet. We will connect a real news source next.</p>
+        </section>
+      )}
+
+      <footer className="mt-8 border-t border-slate-200 pt-5 text-xs leading-6 text-slate-500">
           <p>StockMind AI · Yahoo Finance market data · Five-stock watchlist</p>
           <p>
             Quotes may be delayed. Paper trading is simulated; no real orders
@@ -739,7 +794,7 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] font-semibold tracking-wider text-slate-500">
         {label}
       </p>
-      <p className="mt-2 break-words text-sm font-semibold text-slate-200">
+      <p className="mt-2 break-words text-sm font-semibold text-slate-900">
         {value}
       </p>
     </div>
