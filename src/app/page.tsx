@@ -483,6 +483,45 @@ export default function Home() {
 
   const indicators = analysis?.indicators;
 
+  const analystRecommendation = analysis?.fundamentals?.analystRecommendation;
+  const normalizedRecommendation = analystRecommendation
+    ?.toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .trim();
+
+  const analystTone = !normalizedRecommendation
+    ? 'unknown'
+    : /strong buy|buy|outperform|overweight/.test(normalizedRecommendation)
+      ? 'bullish'
+      : /strong sell|sell|underperform|underweight/.test(normalizedRecommendation)
+        ? 'bearish'
+        : /hold|neutral|equal weight|market perform/.test(normalizedRecommendation)
+          ? 'neutral'
+          : 'unknown';
+
+  const technicalSignal = signal || 'HOLD';
+
+  const signalAgreement =
+    analystTone === 'unknown'
+      ? {
+          title: 'Analyst view unavailable',
+          explanation: 'StockMind cannot compare both views because a recognized analyst consensus is not available.',
+        }
+      : technicalSignal === 'BUY' && analystTone === 'bullish'
+        ? {
+            title: 'Broadly aligned — bullish',
+            explanation: 'Technical indicators and analyst consensus both lean positive. This is agreement between two views, not a guarantee of price gains.',
+          }
+        : technicalSignal === 'SELL' && analystTone === 'bearish'
+          ? {
+              title: 'Broadly aligned — bearish',
+              explanation: 'Technical indicators and analyst consensus both lean negative. This agreement does not guarantee further price declines.',
+            }
+          : {
+              title: 'Mixed signals',
+              explanation: `StockMind's technical signal is ${technicalSignal}, while analyst consensus is ${analystRecommendation}. These views may use different methods and time horizons, so review both before making a decision.`,
+            };
+
   return (
     <main className="min-h-screen bg-slate-50 px-3 py-3 text-slate-900 sm:px-5 md:px-7">
       <header className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -779,6 +818,25 @@ export default function Home() {
                   </p>
                   <p className="mt-2 text-xs text-slate-500">
                     Rule-based analysis, not a prediction of guaranteed profit.
+                  </p>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50/60 p-5">
+                  <p className="text-xs font-semibold tracking-widest text-indigo-700">SIGNAL AGREEMENT</p>
+                  <h3 className="mt-2 text-lg font-semibold text-slate-900">{signalAgreement.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{signalAgreement.explanation}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs text-slate-500">TECHNICAL SIGNAL</p>
+                      <p className="mt-1 font-semibold text-slate-900">{technicalSignal}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs text-slate-500">ANALYST CONSENSUS</p>
+                      <p className="mt-1 font-semibold text-slate-900">{analystRecommendation || 'Unavailable'}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-slate-500">
+                    Analyst opinions and price targets are estimates, not guarantees. This comparison does not change StockMind's technical trading rules.
                   </p>
                 </div>
 
