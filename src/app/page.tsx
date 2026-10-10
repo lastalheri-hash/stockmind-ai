@@ -179,6 +179,11 @@ type NewsData = {
   warnings: string[];
 };
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export default function Home() {
   const [selected, setSelected] = useState("AAPL");
   const [activePage, setActivePage] = useState<"overview" | "paper" | "ai" | "news">("overview");
@@ -201,6 +206,15 @@ export default function Home() {
   const [paperError, setPaperError] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [paperMessage, setPaperMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content: "Hi! I'm STC-AI. Ask me about a stock's indicators, fundamentals, news, or trading risks."
+    }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
 
   const loadStocks = useCallback(async () => {
     setLoading(true);
@@ -300,6 +314,54 @@ export default function Home() {
       setAnalysisLoading(false);
     }
   }, []);
+
+  const sendChat = async () => {
+    const question = chatInput.trim();
+    if (!question || chatLoading) return;
+
+    const nextMessages: ChatMessage[] = [
+      ...chatMessages,
+      { role: "user", content: question }
+    ];
+
+    setChatMessages(nextMessages);
+    setChatInput("");
+    setChatError("");
+    setChatLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: selected,
+          analysis,
+          messages: nextMessages.slice(-12)
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "The AI could not answer. Please try again.");
+      }
+
+      if (typeof result.reply !== "string") {
+        throw new Error("The AI returned an invalid response.");
+      }
+
+      setChatMessages((previous) => [
+        ...previous,
+        { role: "assistant", content: result.reply }
+      ]);
+    } catch (err) {
+      setChatError(
+        err instanceof Error ? err.message : "Unable to reach STC-AI."
+      );
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   const loadPaperPortfolio = useCallback(async () => {
     setPaperLoading(true);
@@ -805,6 +867,141 @@ export default function Home() {
         </div>
 
         </>
+      )}
+
+      {activePage === "ai" && (
+        <section className="mx-auto max-w-5xl">
+          <div className="mb-6">
+            <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700">
+              STC-AI CONVERSATIONAL ASSISTANT
+            </p>
+            <h2 className="mt-2 text-3xl font-bold">Ask your stock analyst</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Discuss technical indicators, company fundamentals, market news and trading risks.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-[#f7faf8] p-4">
+              <div>
+                <p className="font-semibold text-slate-900">STC-AI</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Current stock: {selected} · Context-aware research assistant
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setChatMessages([{
+                    role: "assistant",
+                    content: "Hi! I'm STC-AI. Ask me about a stock's indicators, fundamentals, news, or trading risks."
+                  }]);
+                  setChatError("");
+                }}
+                disabled={chatLoading}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                New conversation
+              </button>
+            </div>
+
+            <div className="max-h-[55vh] min-h-[300px] space-y-4 overflow-y-auto p-4 sm:p-6" aria-live="polite">
+              {chatMessages.map((message, index) => (
+                <div
+                  key={index}
+                  className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
+                >
+                  <div
+                    className={
+                      message.role === "user"
+                        ? "max-w-[90%] rounded-2xl rounded-br-sm bg-emerald-700 px-4 py-3 text-sm leading-6 text-white sm:max-w-[80%]"
+                        : "max-w-[95%] rounded-2xl rounded-bl-sm border border-slate-200 bg-[#f7faf8] px-4 py-3 text-sm leading-6 text-slate-800 sm:max-w-[85%]"
+                    }
+                  >
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wider opacity-70">
+                      {message.role === "user" ? "You" : "STC-AI"}
+                    </p>
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  </div>
+                </div>
+              ))}
+
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-xl border border-slate-200 bg-[#f7faf8] px-4 py-3 text-sm text-slate-600">
+                    STC-AI is thinking…
+                  </div>
+                </div>
+              )}
+
+              {chatError && (
+                <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {chatError}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-200 p-4 sm:p-5">
+              <div className="mb-3 flex flex-wrap gap-2">
+                {[
+                  "Explain the current " + selected + " analysis",
+                  "What risks should I consider?",
+                  "Explain RSI and moving averages"
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    disabled={chatLoading}
+                    onClick={() => setChatInput(suggestion)}
+                    className="rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-50"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void sendChat();
+                }}
+                className="flex items-end gap-2"
+              >
+                <label className="sr-only" htmlFor="stc-ai-chat-input">
+                  Message STC-AI
+                </label>
+                <textarea
+                  id="stc-ai-chat-input"
+                  value={chatInput}
+                  onChange={(event) => setChatInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      void sendChat();
+                    }
+                  }}
+                  placeholder={"Ask about " + selected + " or the stock market…"}
+                  maxLength={3000}
+                  rows={2}
+                  disabled={chatLoading}
+                  className="min-h-[52px] flex-1 resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
+                />
+                <button
+                  type="submit"
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {chatLoading ? "Sending…" : "Send"}
+                </button>
+              </form>
+
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                Research assistance only, not financial advice. Market data may be delayed.
+                STC-AI cannot guarantee trading outcomes. Press Enter to send or Shift+Enter for a new line.
+              </p>
+            </div>
+          </div>
+        </section>
       )}
 
       {activePage === "news" && (
