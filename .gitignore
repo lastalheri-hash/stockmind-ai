@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+.env
+.env.*
+!.env.example
+data/paper-trading.json
+npm-debug.log*
+.DS_Store
+*.backup
+*.repair-backup
+*.tsbuildinfo
