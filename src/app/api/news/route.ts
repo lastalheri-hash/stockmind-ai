@@ -1,51 +1,72 @@
 import { NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
 
-const yahooFinance = new YahooFinance();
+const yahoo = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
-const allowedSymbols = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"];
+const topics = [
+  "stock market",
+  "financial markets",
+  "Federal Reserve economy",
+  "technology stocks",
+];
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const symbol = (searchParams.get("symbol") || "AAPL").toUpperCase();
+export async function GET() {
+  const results = await Promise.allSettled(
+    topics.map((query) =>
+      yahoo.search(query, {
+        quotesCount: 0,
+        newsCount: 10,
+        region: "US",
+        lang: "en-US",
+      })
+    )
+  );
 
-  if (!allowedSymbols.includes(symbol)) {
-    return NextResponse.json(
-      { error: "Unsupported stock symbol." },
-      { status: 400 }
-    );
-  }
+  const articles = new Map<string, {
+    id: string;
+    title: string;
+    publisher: string;
+    link: string;
+    publishedAt: unknown;
+    relatedTickers: string[];
+    topic: string;
+  }>();
 
-  try {
-    const results = await yahooFinance.search(symbol, {
-      quotesCount: 0,
-      newsCount: 10,
-      region: "US",
-      lang: "en-US",
-    });
+  results.forEach((result, index) => {
+    if (result.status !== "fulfilled") return;
 
-    const news = results.news.map((article) => ({
-      id: article.uuid,
-      title: article.title,
-      publisher: article.publisher,
-      link: article.link,
-      publishedAt: article.providerPublishTime,
-      relatedTickers: article.relatedTickers ?? [],
-    }));
+    for (const article of result.value.news || []) {
+      const key = article.uuid || article.link || article.title;
 
-    return NextResponse.json({
-      symbol,
-      news,
-      count: news.length,
-      source: "Yahoo Finance",
-      updatedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Market news error:", error);
+      if (!key || articles.has(key)) continue;
 
-    return NextResponse.json(
-      { error: "Unable to load market news. Please try again later." },
-      { status: 502 }
-    );
-  }
+      articles.set(key, {
+        id: article.uuid || key,
+        title: article.title,
+        publisher: article.publisher || "Unknown publisher",
+        link: article.link,
+        publishedAt: article.providerPublishTime,
+        relatedTickers: article.relatedTickers || [],
+        topic: topics[index],
+      });
+    }
+  });
+
+  const news = Array.from(articles.values())
+    .sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt as string).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt as string).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 30);
+
+  return NextResponse.json({
+    news,
+    count: news.length,
+    source: "Yahoo Finance",
+    updatedAt: new Date().toISOString(),
+    warnings: results
+      .map((result, index) => result.status === "rejected" ? topics[index] : null)
+      .filter(Boolean),
+  });
 }

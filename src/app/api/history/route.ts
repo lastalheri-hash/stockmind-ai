@@ -3,8 +3,6 @@ import YahooFinance from "yahoo-finance2";
 
 const yahooFinance = new YahooFinance();
 
-const allowedSymbols = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"];
-
 const periods: Record<string, number> = {
   "1d": 1,
   "5d": 5,
@@ -15,10 +13,10 @@ const periods: Record<string, number> = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const symbol = (searchParams.get("symbol") || "AAPL").toUpperCase();
+  const symbol = (searchParams.get("symbol") || "AAPL").trim().toUpperCase();
   const range = searchParams.get("range") || "1mo";
 
-  if (!allowedSymbols.includes(symbol)) {
+  if (!/^[A-Z0-9.^=-]{1,20}$/.test(symbol)) {
     return NextResponse.json(
       { error: "Unsupported stock symbol." },
       { status: 400 }

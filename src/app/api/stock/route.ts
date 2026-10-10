@@ -5,11 +5,9 @@ const yahooFinance = new YahooFinance();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const symbol = (searchParams.get("symbol") || "AAPL").toUpperCase();
+  const symbol = (searchParams.get("symbol") || "AAPL").trim().toUpperCase();
 
-  const allowedSymbols = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"];
-
-  if (!allowedSymbols.includes(symbol)) {
+  if (!/^[A-Z0-9.^=-]{1,20}$/.test(symbol)) {
     return NextResponse.json(
       { error: "Unsupported stock symbol." },
       { status: 400 }

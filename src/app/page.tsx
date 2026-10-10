@@ -89,18 +89,55 @@ type PaperResponse = {
   };
 };
 
-const watchlist = [
-  { symbol: "AAPL", name: "Apple Inc." },
-  { symbol: "NVDA", name: "NVIDIA Corporation" },
-  { symbol: "TSLA", name: "Tesla Inc." },
-  { symbol: "MSFT", name: "Microsoft Corporation" },
-  { symbol: "AMZN", name: "Amazon.com Inc." },
-];
+type MarketStock = {
+  symbol: string;
+  name: string;
+  price: number | null;
+  currency: string;
+  change: number | null;
+  changePercent: number | null;
+  volume?: number | null;
+  marketCap?: number | null;
+};
+
+type MarketData = {
+  indices: (MarketStock & { name: string })[];
+  gainers: MarketStock[];
+  losers: MarketStock[];
+  mostActive: MarketStock[];
+  updatedAt: string;
+  source: string;
+  changePeriod: string;
+  warnings: string[];
+};
+
+type NewsArticle = {
+  id: string;
+  title: string;
+  publisher: string;
+  link: string;
+  publishedAt: unknown;
+  relatedTickers: string[];
+  topic: string;
+};
+
+type NewsData = {
+  news: NewsArticle[];
+  count: number;
+  source: string;
+  updatedAt: string;
+  warnings: string[];
+};
 
 export default function Home() {
   const [selected, setSelected] = useState("AAPL");
   const [activePage, setActivePage] = useState<"overview" | "paper" | "ai" | "news">("overview");
   const [stocks, setStocks] = useState<Record<string, Stock>>({});
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [searchSymbol, setSearchSymbol] = useState("AAPL");
+  const [newsData, setNewsData] = useState<NewsData | null>(null);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState("");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
@@ -119,40 +156,70 @@ export default function Home() {
     setError("");
 
     try {
-      const results = await Promise.all(
-        watchlist.map(async (item) => {
-          try {
-            const response = await fetch(
-              `/api/stock?symbol=${item.symbol}`,
-              { cache: "no-store" }
-            );
+      const response = await fetch("/api/market", { cache: "no-store" });
+      if (!response.ok) throw new Error("Market data is temporarily unavailable.");
 
-            if (!response.ok) return null;
+      const data = (await response.json()) as MarketData;
+      setMarketData(data);
 
-            const data = (await response.json()) as Stock;
-            return [item.symbol, data] as const;
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      const successful: Record<string, Stock> = {};
-
-      for (const result of results) {
-        if (result) successful[result[0]] = result[1];
-      }
-
-      setStocks(successful);
+      const allStocks = [
+        ...data.gainers,
+        ...data.losers,
+        ...data.mostActive,
+        ...data.indices,
+      ];
+      setStocks((previous) => {
+        const updated = { ...previous };
+        for (const item of allStocks) {
+          updated[item.symbol] = {
+            symbol: item.symbol,
+            name: item.name,
+            price: item.price,
+            currency: item.currency || "USD",
+            change: item.change,
+            changePercent: item.changePercent,
+            marketState: "LATEST REPORTED SESSION",
+          };
+        }
+        return updated;
+      });
       setLastUpdated(new Date().toLocaleTimeString());
-
-      if (Object.keys(successful).length === 0) {
-        setError("Market data is temporarily unavailable. Please try again.");
+      if (data.warnings?.length) {
+        setError(data.warnings.join(". "));
       }
-    } catch {
-      setError("Unable to retrieve market quotes.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to retrieve market data.");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const loadSelectedStock = useCallback(async (symbol: string) => {
+    try {
+      const response = await fetch(
+        `/api/stock?symbol=${encodeURIComponent(symbol)}`,
+        { cache: "no-store" }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Stock quote unavailable.");
+      setStocks((previous) => ({ ...previous, [symbol]: result as Stock }));
+    } catch {
+      setError(`Unable to load a quote for ${symbol}. Check the ticker and try again.`);
+    }
+  }, []);
+
+  const loadNews = useCallback(async () => {
+    setNewsLoading(true);
+    setNewsError("");
+    try {
+      const response = await fetch("/api/news", { cache: "no-store" });
+      const result = (await response.json()) as NewsData;
+      if (!response.ok) throw new Error("Market news is temporarily unavailable.");
+      setNewsData(result);
+    } catch (err) {
+      setNewsError(err instanceof Error ? err.message : "Unable to load market news.");
+    } finally {
+      setNewsLoading(false);
     }
   }, []);
 
@@ -270,7 +337,12 @@ export default function Home() {
 
   useEffect(() => {
     void loadAnalysis(selected);
-  }, [selected, loadAnalysis]);
+    void loadSelectedStock(selected);
+  }, [selected, loadAnalysis, loadSelectedStock]);
+
+  useEffect(() => {
+    if (activePage === "news") void loadNews();
+  }, [activePage, loadNews]);
 
   const current = stocks[selected];
 
@@ -304,7 +376,7 @@ export default function Home() {
             StockMind <span className="text-emerald-700">AI</span>
           </h1>
           <p className="mt-2 text-xs tracking-[0.18em] text-slate-600">
-            EQUITY INTELLIGENCE  /  PAPER TRADING LAB
+            EQUITY INTELLIGENCE  /  MARKET RESEARCH
           </p>
         </div>
 
@@ -327,7 +399,6 @@ export default function Home() {
 
       <nav aria-label="Main navigation" className="mx-auto mt-5 flex max-w-7xl flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
       <button onClick={() => setActivePage("overview")} className={activePage === "overview" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Overview</button>
-      <button onClick={() => setActivePage("paper")} className={activePage === "paper" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Paper Trading</button>
       <button onClick={() => setActivePage("ai")} className={activePage === "ai" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>STC-AI</button>
       <button onClick={() => setActivePage("news")} className={activePage === "news" ? "rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white" : "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Market News</button>
     </nav>
@@ -352,51 +423,108 @@ export default function Home() {
           </p>
         </div>
 
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const ticker = searchSymbol.trim().toUpperCase();
+            if (!/^[A-Z0-9.^=-]{1,20}$/.test(ticker)) {
+              setError("Enter a valid stock ticker.");
+              return;
+            }
+            setError("");
+            setSelected(ticker);
+          }}
+          className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row"
+        >
+          <div className="flex-1">
+            <label htmlFor="stock-symbol" className="mb-2 block text-sm font-semibold">
+              Search any stock ticker
+            </label>
+            <input
+              id="stock-symbol"
+              type="text"
+              value={searchSymbol}
+              onChange={(event) => setSearchSymbol(event.target.value.toUpperCase())}
+              placeholder="Enter ticker, e.g. TSLA, META, AMD"
+              maxLength={20}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            />
+          </div>
+          <button
+            type="submit"
+            className="self-end rounded-xl bg-emerald-700 px-6 py-3 font-semibold text-white hover:bg-emerald-800"
+          >
+            Analyze Stock
+          </button>
+        </form>
+
         {error && (
           <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             {error}
           </div>
         )}
 
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {watchlist.map((item) => {
-            const stock = stocks[item.symbol];
-            const positive = (stock?.change ?? 0) >= 0;
+        <section className="mt-7 space-y-6">
+          <div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-lg font-bold">Major Market Indices</h3>
+              <span className="text-xs text-slate-500">Latest available quotes</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {(marketData?.indices ?? []).map((item) => {
+                const positive = (item.changePercent ?? 0) >= 0;
+                return (
+                  <button key={item.symbol} onClick={() => setSelected(item.symbol)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-emerald-300">
+                    <p className="text-sm font-semibold">{item.name}</p>
+                    <p className="mt-3 text-xl font-bold">{money(item.price)}</p>
+                    <p className={`mt-1 text-sm ${positive ? "text-emerald-700" : "text-rose-700"}`}>
+                      {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-            return (
-              <button
-                key={item.symbol}
-                onClick={() => setSelected(item.symbol)}
-                className={`rounded-2xl border p-4 text-left transition hover:border-emerald-300 ${
-                  selected === item.symbol
-                    ? "border-emerald-300 bg-emerald-50"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold">{item.symbol}</span>
-                  <span
-                    className={`text-xs ${
-                      stock?.changePercent == null
-                        ? "text-slate-500"
-                        : positive
-                          ? "text-emerald-700"
-                          : "text-rose-700"
-                    }`}
-                  >
-                    {stock?.changePercent == null
-                      ? "—"
-                      : `${positive ? "+" : ""}${stock.changePercent.toFixed(2)}%`}
-                  </span>
-                </div>
-                <p className="mt-3 text-xl font-bold">{money(stock?.price)}</p>
-                <p className="mt-1 truncate text-xs text-slate-500">
-                  {item.name}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {[
+              { title: "Top Gainers", items: marketData?.gainers ?? [] },
+              { title: "Top Losers", items: marketData?.losers ?? [] },
+              { title: "Most Active", items: marketData?.mostActive ?? [] },
+            ].map((group) => (
+              <section key={group.title} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <h3 className="mb-3 font-bold">{group.title}</h3>
+                {group.items.length === 0 ? (
+                  <p className="text-sm text-slate-500">Market data is loading or unavailable.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {group.items.slice(0, 8).map((item) => {
+                      const positive = (item.changePercent ?? 0) >= 0;
+                      return (
+                        <button key={item.symbol} onClick={() => setSelected(item.symbol)} className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left hover:bg-slate-50 ${selected === item.symbol ? "bg-emerald-50" : ""}`}>
+                          <span className="min-w-0">
+                            <span className="block font-semibold">{item.symbol}</span>
+                            <span className="block truncate text-xs text-slate-500">{item.name}</span>
+                          </span>
+                          <span className="shrink-0 text-right">
+                            <span className="block text-sm font-semibold">{money(item.price)}</span>
+                            <span className={`text-xs ${positive ? "text-emerald-700" : "text-rose-700"}`}>
+                              {item.changePercent == null ? "—" : `${positive ? "+" : ""}${item.changePercent.toFixed(2)}%`}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+
+          <p className="text-xs text-slate-500">
+            {marketData?.changePeriod ?? "Percentage changes reflect the latest reported market session, not a rolling 24-hour return."}
+          </p>
+        </section>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-3">
           <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 xl:col-span-2">
@@ -407,8 +535,7 @@ export default function Home() {
                 </p>
                 <h3 className="mt-2 text-3xl font-bold">{selected}</h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  {current?.name ||
-                    watchlist.find((item) => item.symbol === selected)?.name}
+                  {current?.name || selected}
                 </p>
               </div>
               <div className="text-right">
@@ -557,229 +684,128 @@ export default function Home() {
         </>
       )}
 
-      {activePage === "paper" && (
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+      {activePage === "news" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs tracking-widest text-emerald-700">
-                SIMULATED TRADING
-              </p>
-              <h3 className="mt-2 text-2xl font-bold">Paper Trading Desk</h3>
+              <p className="text-xs font-semibold tracking-widest text-emerald-700">MARKET INTELLIGENCE</p>
+              <h2 className="mt-2 text-3xl font-bold text-slate-900">Market News</h2>
               <p className="mt-2 text-sm text-slate-600">
-                Practice with virtual money. No real brokerage orders are placed.
+                Financial markets, technology stocks, economic updates and Federal Reserve news.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Source: {newsData?.source || "Yahoo Finance"}
+                {newsData?.updatedAt ? " · Updated " + new Date(newsData.updatedAt).toLocaleTimeString() : ""}
               </p>
             </div>
             <button
-              onClick={() => void loadPaperPortfolio()}
-              disabled={paperLoading || paperBusy}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-emerald-50 disabled:opacity-50"
+              type="button"
+              onClick={() => void loadNews()}
+              disabled={newsLoading}
+              className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
             >
-              {paperLoading ? "Refreshing…" : "Refresh portfolio"}
+              {newsLoading ? "Refreshing…" : "Refresh News"}
             </button>
           </div>
 
-          {paperError && (
-            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-              {paperError}
-            </div>
+          {newsLoading && (
+            <p className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+              Loading the latest available headlines…
+            </p>
           )}
 
-          {paperMessage && (
-            <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-50 p-3 text-sm text-emerald-700">
-              {paperMessage}
-            </div>
-          )}
-
-          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Metric label="PORTFOLIO EQUITY" value={money(paper?.portfolio?.equity)} />
-            <Metric label="AVAILABLE CASH" value={money(paper?.portfolio?.availableCash)} />
-            <Metric
-              label="UNREALIZED P&L"
-              value={money(paper?.portfolio?.unrealizedPnl)}
-            />
-            <Metric
-              label="REALIZED P&L"
-              value={money(paper?.portfolio?.realizedPnl)}
-            />
-            <Metric label="TOTAL P&L" value={money(paper?.portfolio?.totalPnl)} />
-            <Metric
-              label="WIN RATE"
-              value={paper?.portfolio ? number(paper.portfolio.winRatePercent) + "%" : "—"}
-            />
-            <Metric
-              label="CLOSED TRADES"
-              value={paper?.portfolio ? String(paper.portfolio.totalClosedTrades) : "—"}
-            />
-            <Metric
-              label="STARTING BALANCE"
-              value={money(paper?.portfolio?.startingCash)}
-            />
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
-              <h4 className="font-semibold">Open a virtual position</h4>
-              <p className="mt-2 text-sm text-slate-600">
-                Selected stock: <strong className="text-slate-900">{selected}</strong>
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Quote: <strong className="text-slate-900">{money(current?.price)}</strong>
-              </p>
-
-              <label className="mt-4 block text-xs text-slate-600" htmlFor="paper-quantity">
-                Number of shares
-              </label>
-              <input
-                id="paper-quantity"
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-slate-900 outline-none focus:border-emerald-300"
-              />
-
+          {newsError && (
+            <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-sm text-rose-800">{newsError}</p>
               <button
-                onClick={() => void openPaperTrade()}
-                disabled={paperBusy || paperLoading}
-                className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 font-bold text-slate-900 hover:bg-emerald-300 disabled:opacity-50"
+                type="button"
+                onClick={() => void loadNews()}
+                className="mt-3 text-sm font-semibold text-rose-800 underline"
               >
-                {paperBusy ? "Processing…" : "Open paper trade"}
+                Try again
               </button>
-
-              <p className="mt-3 text-xs leading-5 text-slate-500">
-                Backend limits: maximum position {money(paper?.limits?.maxPositionValue ?? 3000)};
-                risk budget {number(paper?.limits?.riskPerTradePercent ?? 1)}% per trade.
-              </p>
             </div>
+          )}
 
-            <div className="rounded-xl border border-slate-200 bg-[#f7faf8] p-4 lg:col-span-2">
-              <h4 className="font-semibold">Open positions</h4>
+          {newsData?.warnings && newsData.warnings.length > 0 && (
+            <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
+              Some news searches did not respond. Available headlines are shown below.
+            </p>
+          )}
 
-              {!paper?.openTrades?.length ? (
-                <p className="mt-4 text-sm text-slate-500">
-                  {paperLoading ? "Loading positions…" : "No open paper trades."}
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {paper.openTrades.map((trade) => {
-                    const pnl = (trade.currentPrice - trade.entryPrice) * trade.quantity;
+          {newsData && newsData.news.length > 0 && (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {newsData.news.map((article) => {
+                const rawDate = article.publishedAt;
+                const timestamp = typeof rawDate === "number"
+                  ? (rawDate < 1000000000000 ? rawDate * 1000 : rawDate)
+                  : rawDate ? new Date(String(rawDate)).getTime() : NaN;
+                const dateLabel = Number.isFinite(timestamp)
+                  ? new Date(timestamp).toLocaleString()
+                  : "Publication time unavailable";
 
-                    return (
-                      <div key={trade.id} className="rounded-lg border border-slate-200 p-3">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="font-bold">{trade.symbol} · {trade.quantity} shares</p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Entry {money(trade.entryPrice)} · Current {money(trade.currentPrice)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className={pnl >= 0 ? "font-semibold text-emerald-700" : "font-semibold text-rose-700"}>
-                              {pnl >= 0 ? "+" : ""}{money(pnl)}
-                            </p>
-                            <button
-                              onClick={() => void closePaperTrade(trade.id)}
-                              disabled={paperBusy}
-                              className="mt-2 rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-700 hover:bg-rose-400/10 disabled:opacity-50"
-                            >
-                              Close position
-                            </button>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
-                          <span>Stop loss: {money(trade.stopLoss)}</span>
-                          <span>Take profit: {money(trade.takeProfit)}</span>
-                          <span>Value: {money(trade.positionValue)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-xl border border-slate-200 bg-[#f7faf8] p-4">
-            <h4 className="font-semibold">Closed trade history</h4>
-
-            {!paper?.closedTrades?.length ? (
-              <p className="mt-3 text-sm text-slate-500">
-                Closed trades will appear here.
-              </p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                {paper.closedTrades.slice(0, 20).map((trade) => (
-                  <div key={trade.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 py-3 last:border-0">
-                    <div>
-                      <p className="font-semibold">{trade.symbol} · {trade.quantity} shares</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Exit {money(trade.exitPrice)} · {trade.closeReason || "CLOSED"}
-                      </p>
+                return (
+                  <article
+                    key={article.id}
+                    className="flex h-full flex-col rounded-2xl border border-slate-200 p-5 transition hover:border-emerald-500 hover:shadow-sm"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                        {article.topic}
+                      </span>
+                      {article.relatedTickers?.slice(0, 3).map((ticker) => (
+                        <button
+                          key={ticker}
+                          type="button"
+                          onClick={() => {
+                            setSearchSymbol(ticker);
+                            setSelected(ticker);
+                            setActivePage("overview");
+                          }}
+                          className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-emerald-100"
+                        >
+                          {ticker}
+                        </button>
+                      ))}
                     </div>
-                    <p className={trade.realizedPnl >= 0 ? "font-semibold text-emerald-700" : "font-semibold text-rose-700"}>
-                      {trade.realizedPnl >= 0 ? "+" : ""}{money(trade.realizedPnl)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                    <h3 className="mt-4 text-lg font-semibold leading-7 text-slate-900">
+                      {article.title}
+                    </h3>
+                    <div className="mt-auto pt-5">
+                      <p className="text-xs text-slate-500">{article.publisher}</p>
+                      <p className="mt-1 text-xs text-slate-500">{dateLabel}</p>
+                      <a
+                        href={article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+                      >
+                        Read original article ↗
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
 
-          <p className="mt-4 text-xs leading-5 text-slate-500">
-            Stop-loss and take-profit checks run when the paper-trading API is requested;
-            they are not a continuously running background service. Quote availability
-            and delays may affect updates. On serverless hosting, this file-based portfolio
-            needs persistent storage before deployment.
+          {!newsLoading && !newsError && newsData && newsData.news.length === 0 && (
+            <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-600">
+              No headlines are available right now. Try refreshing in a little while.
+            </p>
+          )}
+
+          <p className="mt-6 text-xs leading-5 text-slate-500">
+            Headlines are provided by Yahoo Finance. Publication times and availability depend on the original source.
+            News is for information only and is not a trading recommendation.
           </p>
-        </section>
-
-        )}
-
-
-      {activePage === "ai" && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold tracking-widest text-emerald-700">STOCK INTELLIGENCE</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">STC-AI</h2>
-          <p className="mt-2 text-sm text-slate-600">Your stock analysis workspace.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"].map((symbol) => (
-              <button key={symbol} onClick={() => { setSelected(symbol); void loadAnalysis(symbol); }} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-500">{symbol}</button>
-            ))}
-          </div>
-          <div className="mt-5 rounded-xl bg-slate-50 p-4">
-            <p className="font-semibold text-slate-900">Analysis for {selected}</p>
-            {analysisLoading && <p className="mt-2 text-sm text-slate-500">Loading analysis...</p>}
-            {analysisError && <p className="mt-2 text-sm text-rose-700">{analysisError}</p>}
-            {analysis && !analysisLoading && <pre className="mt-3 whitespace-pre-wrap break-words text-sm text-slate-700">{JSON.stringify(analysis, null, 2)}</pre>}
-            {!analysis && !analysisLoading && !analysisError && <p className="mt-2 text-sm text-slate-500">Choose a stock to load its analysis.</p>}
-          </div>
-          <p className="mt-4 text-xs text-slate-500">This uses the existing analysis service. Conversational AI will need a connected AI model.</p>
-        </section>
-      )}
-
-      {activePage === "news" && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold tracking-widest text-emerald-700">MARKET INTELLIGENCE</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">Market News</h2>
-          <p className="mt-2 text-sm text-slate-600">Choose a stock to view its overview while we connect a real news feed.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"].map((symbol) => (
-              <button key={symbol} onClick={() => { setSelected(symbol); setActivePage("overview"); }} className="rounded-xl border border-slate-200 p-4 text-left hover:border-emerald-500">
-                <span className="font-semibold text-slate-900">{symbol}</span>
-                <p className="mt-1 text-xs text-slate-500">Open stock overview</p>
-              </button>
-            ))}
-          </div>
-          <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Live headlines are not connected yet. We will connect a real news source next.</p>
         </section>
       )}
 
       <footer className="mt-8 border-t border-slate-200 pt-5 text-xs leading-6 text-slate-500">
-          <p>StockMind AI · Yahoo Finance market data · Five-stock watchlist</p>
+          <p>StockMind AI · Yahoo Finance market data · General market coverage</p>
           <p>
-            Quotes may be delayed. Paper trading is simulated; no real orders
+            Quotes may be delayed. StockMind AI provides research tools; no real orders
             are sent to a brokerage.
           </p>
         </footer>

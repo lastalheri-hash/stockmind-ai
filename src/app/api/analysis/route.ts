@@ -3,8 +3,6 @@ import YahooFinance from "yahoo-finance2";
 
 const yahooFinance = new YahooFinance();
 
-const allowedSymbols = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"];
-
 function average(values: number[]): number {
   if (values.length === 0) return 0;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -36,9 +34,9 @@ function calculateRSI(closes: number[], period = 14): number | null {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const symbol = (searchParams.get("symbol") || "AAPL").toUpperCase();
+  const symbol = (searchParams.get("symbol") || "AAPL").trim().toUpperCase();
 
-  if (!allowedSymbols.includes(symbol)) {
+  if (!/^[A-Z0-9.^=-]{1,20}$/.test(symbol)) {
     return NextResponse.json(
       { error: "Unsupported stock symbol." },
       { status: 400 }
