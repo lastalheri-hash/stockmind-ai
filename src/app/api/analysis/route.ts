@@ -178,33 +178,53 @@ export async function GET(request: Request) {
       ? Number((((latest - previous) / previous) * 100).toFixed(2))
       : 0;
 
+  const recentCloses = closes.slice(-20);
+  const support = Math.min(...recentCloses);
+  const resistance = Math.max(...recentCloses);
+
   const bullishTrend = sma20 > sma50 && latest > sma20;
   const bearishTrend = sma20 < sma50 && latest < sma20;
+  const nearSupport = support > 0 && latest <= support * 1.025;
+  const nearResistance = resistance > 0 && latest >= resistance * 0.985;
+  const positiveMomentum = latest > previous;
+  const negativeMomentum = latest < previous;
+  const rsiValue = rsi ?? 50;
 
   let signal: "BUY" | "SELL" | "HOLD" = "HOLD";
   let confidencePercent = 50;
   let reason =
-    "The technical indicators do not agree strongly enough to support a directional signal.";
+    "No clear entry or profit-taking setup is confirmed. Wait for stronger evidence.";
 
-  if (rsi !== null && bullishTrend && rsi >= 50 && rsi < 70) {
+  if (rsi !== null && nearSupport && positiveMomentum && rsiValue >= 35 && rsiValue < 68) {
+    signal = "BUY";
+    confidencePercent = 72;
+    reason = "Price is near recent support and has started moving upward. This is a potential entry setup, not a guarantee of future gains.";
+  } else if (rsi !== null && bullishTrend && rsiValue >= 48 && rsiValue < 68 && positiveMomentum) {
     signal = "BUY";
     confidencePercent = 75;
-    reason =
-      "Price is above SMA20, SMA20 is above SMA50, and RSI supports positive momentum. This is a technical setup, not a guarantee of future gains.";
-  } else if (rsi !== null && bearishTrend && rsi <= 50 && rsi > 30) {
+    reason = "Price is above SMA20, SMA20 is above SMA50, and momentum is positive. This is a potential trend-following entry, not a guarantee of future gains.";
+  } else if (rsi !== null && nearResistance && rsiValue >= 60 && (negativeMomentum || rsiValue >= 70)) {
     signal = "SELL";
-    confidencePercent = 75;
-    reason =
-      "Price is below SMA20, SMA20 is below SMA50, and RSI supports negative momentum. This is a technical setup, not a guarantee of future declines.";
-  } else if (rsi !== null && rsi >= 70) {
-    confidencePercent = 65;
-    reason =
-      "RSI is at or above 70. Momentum may be overextended, so the system avoids opening a new BUY signal based on these indicators alone.";
-  } else if (rsi !== null && rsi <= 30) {
-    confidencePercent = 65;
-    reason =
-      "RSI is at or below 30. The stock may be oversold, so the system avoids opening a new SELL signal based on these indicators alone.";
+    confidencePercent = 72;
+    reason = "Price is near recent resistance and momentum may be weakening or overextended. Consider reviewing an existing position; this is not an instruction to sell stock you do not own.";
+  } else if (rsi !== null && rsiValue >= 75 && negativeMomentum && latest < sma20) {
+    signal = "SELL";
+    confidencePercent = 68;
+    reason = "Elevated RSI, weakening momentum, and price below SMA20 suggest fading strength. Review an existing position.";
+  } else if (rsi !== null && rsiValue >= 70) {
+    confidencePercent = 60;
+    reason = "RSI is elevated. Avoid chasing a new entry and wait for more evidence.";
+  } else if (rsi !== null && rsiValue <= 30) {
+    confidencePercent = 60;
+    reason = "The stock may be oversold, but low RSI alone does not confirm a reversal. Wait for price action to improve.";
+  } else if (bearishTrend) {
+    confidencePercent = 58;
+    reason = "Price is below SMA20 and SMA20 is below SMA50. The trend is weak, but falling prices alone are not a take-profit signal.";
   }
+
+  const referencePrice = Number(latest.toFixed(2));
+  const stopLossPrice = Number((latest * 0.97).toFixed(2));
+  const takeProfitPrice = Number((latest * 1.06).toFixed(2));
 
   return NextResponse.json({
     symbol,
@@ -219,6 +239,18 @@ export async function GET(request: Request) {
       sma50: Number(sma50.toFixed(2)),
       dailyMomentumPercent: momentumPercent,
       trend: bullishTrend ? "BULLISH" : bearishTrend ? "BEARISH" : "MIXED",
+    },
+    riskManagement: {
+      referencePrice,
+      stopLossPrice,
+      takeProfitPrice,
+      rewardToRiskRatio: 2,
+      stopLossPercent: 3,
+      takeProfitPercent: 6,
+    },
+    priceLevels: {
+      recentSupport: Number(support.toFixed(2)),
+      recentResistance: Number(resistance.toFixed(2)),
     },
     fundamentals,
     news,
